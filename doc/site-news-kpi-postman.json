@@ -1,0 +1,59 @@
+{
+  "info": {
+    "_postman_id": "fe71d0cc-fcff-4842-83dd-e22f1580de79",
+    "name": "site-news-kpi",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Api list",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8019/api/list",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8019",
+          "path": [
+            "api",
+            "list"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2. Api siteNews",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8019/api/siteNews?mediaId=110&pageTypeIds=14,15,18,19",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8019",
+          "path": [
+            "api",
+            "siteNews"
+          ],
+          "query": [
+            {
+              "key": "mediaId",
+              "value": "110"
+            },
+            {
+              "key": "pageTypeIds",
+              "value": "14,15,18,19"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

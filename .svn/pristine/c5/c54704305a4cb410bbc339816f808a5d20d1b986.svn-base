@@ -1,0 +1,15 @@
+package com.example.service;
+
+public interface SiteNewsService {
+	
+	public void addSiteNews(); // 站点新闻
+	
+	public void addOriginalNews(); // 原创新闻
+	
+	public void addHotNews(); // 热点新闻
+	
+	public void addKeyWordNews(); // 站点关键词新闻
+	
+	public void addZlmtNews();//主流媒体报道
+	
+}

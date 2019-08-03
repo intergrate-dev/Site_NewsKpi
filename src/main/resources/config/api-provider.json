@@ -1,0 +1,135 @@
+{
+  "apis": [
+    {
+      "uri": "siteNews",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [14,15,16,17,18,20,23,24,49,64,65,81,82,83]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "站点新闻更新"
+    },
+    {
+      "uri": "keyWordKpi",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [74,75]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "关键词kpi更新"
+    },
+    {
+      "uri": "keyWordNews",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [39,45,72]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "站点关键词新闻更新"
+    },
+    {
+      "uri": "hotNews",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [14,15,16,17]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "站点热点新闻更新"
+    },
+    {
+      "uri": "addOriginalNews",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [14,15,16,17]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "原创新闻更新"
+    },
+    {
+      "uri": "emotion",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [72]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "情感分析更新"
+    },
+    {
+      "uri": "zlmtNews",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [45,68,69,70]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "站点关键词新闻更新"
+    },
+    {
+      "uri": "articlePress",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [63]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "文章传播分析数据更新"
+    },
+    {
+      "uri": "eventTrack",
+      "params": null,
+      "c_name": "事件追踪处理更新"
+    },
+    {
+      "uri": "spreadMap",
+      "params": [
+        {
+          "name": "pageTypeIds",
+          "input": [13]
+        },
+        {
+          "name": "mediaId",
+          "input": 110
+        }
+      ],
+      "c_name": "传播地图更新"
+    }
+  ]
+}

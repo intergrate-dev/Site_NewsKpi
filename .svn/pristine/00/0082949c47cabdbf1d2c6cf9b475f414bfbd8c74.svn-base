@@ -1,0 +1,6 @@
+package com.example.service;
+
+public interface ArticlePressService {
+	
+	public void addArticlePress(); // 站点新闻
+}

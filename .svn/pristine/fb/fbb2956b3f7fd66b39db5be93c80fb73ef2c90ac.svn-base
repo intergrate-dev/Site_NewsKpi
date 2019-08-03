@@ -1,0 +1,5 @@
+package com.example.service;
+
+public interface KeyWordKpiService {
+	public void addKeyWordKpi(); // 站点新闻
+}

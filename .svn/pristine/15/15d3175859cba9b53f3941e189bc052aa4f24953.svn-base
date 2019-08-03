@@ -1,0 +1,15 @@
+package com.example.commons;
+
+
+import com.example.redis.BasePrefix;
+
+public class AppIdentifyKey extends BasePrefix {
+
+    private AppIdentifyKey(int expireSeconds, String prefix) {
+        super(expireSeconds, prefix);
+    }
+
+    public static AppIdentifyKey appIdentifyKey = new AppIdentifyKey(3 * 3600, "SNK:");
+
+    //public static final String APP_IDENTIFY_KEY = "siteNewsKpi";
+}

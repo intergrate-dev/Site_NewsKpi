@@ -1,0 +1,166 @@
+package com.example.controller;
+
+import java.text.SimpleDateFormat;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.example.bean.BigScreenEntity;
+import com.example.service.ArticlePressService;
+import com.example.service.EmotionService;
+import com.example.service.EventTrackService;
+import com.example.service.KeyWordKpiService;
+import com.example.service.LiangHuiNewsService;
+import com.example.service.SiteKpiService;
+import com.example.service.SiteNewsService;
+import com.example.service.SpreadMapService;
+
+@Controller
+@RequestMapping("/news")
+public class TestController {
+		@Autowired
+		private LiangHuiNewsService liangHuiNewsService;
+		@Autowired
+		private SiteNewsService sitenews;
+		@Autowired
+		private SiteKpiService KpiService;
+		@Autowired
+		private ArticlePressService ArticlePress;
+		@Autowired
+		private BigScreenEntity BSEntity;
+		@Autowired
+		private EmotionService emotionService;
+		@Autowired
+		private KeyWordKpiService keyWordKpiService;
+		@Autowired
+		private SiteKpiService SiteKpiService;
+		@Autowired
+		private EventTrackService eventTrack;
+		@Autowired
+		private SpreadMapService SpreadMap;
+		
+		@RequestMapping("/test")   
+		public @ResponseBody String test1() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				sitenews.addSiteNews();				
+				//sitenews.addKeyWordNews();
+				//sitenews.addZlmtNews();
+				//sitenews.addSiteNews();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		}
+		@RequestMapping("/KeyWordKpi")   
+		public @ResponseBody String test4() throws Exception { 
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				keyWordKpiService.addKeyWordKpi();			
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		       } 
+		@RequestMapping("/KeyWord")   
+		public @ResponseBody String test2() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				sitenews.addKeyWordNews();
+				//sitenews.addSiteNews();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		} 
+		@RequestMapping("/HotNews")
+		public @ResponseBody String test5() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				sitenews.addHotNews();
+				//sitenews.addSiteNews();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		} 
+		@RequestMapping("/emotion")   
+		public @ResponseBody String test3() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				emotionService.addEmotion();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		} 
+		@RequestMapping("/kpinews")   
+		public @ResponseBody String kpinews() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				//liangHuiNewsService.addLHKeyWordKpi();
+				sitenews.addKeyWordNews();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		}  
+		@RequestMapping("/kpi")   
+		public @ResponseBody String kpi() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				//KpiService.addkpi("-784752488", "news", "中工网", "26229", "7天");
+				//KpiService.addWebWord();
+				//SiteKpiService.addWebWord();
+				ArticlePress.addArticlePress();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		} 
+		@RequestMapping("/eventTrack")   
+		public @ResponseBody String eventTrack() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				eventTrack.getEvenIdByMcode();
+				eventTrack.saveTopicEvolution();
+				eventTrack.saveHotWordsRec();
+				eventTrack.saveTodayTopics();
+				eventTrack.saveEmotionAnalysis();
+				eventTrack.saveChannelType();
+				eventTrack.saveReportTrend();
+				eventTrack.saveReportsRank();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		} 
+		@RequestMapping("/SpreadMap")   
+		public @ResponseBody String SpreadMap() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				SpreadMap.addSpreadMap();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		} 
+		@RequestMapping("/sitekpi")   
+		public @ResponseBody String sitekpi() throws Exception { 
+			 //String str = httpAPIService.doGet("http://www.baidu.com");
+		        //System.out.println(str);
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");   
+				System.out.println(df.format(System.currentTimeMillis())+"开始");
+				SiteKpiService.addWebWord();
+				System.out.println(df.format(System.currentTimeMillis())+"结束");	
+		        return "haha";
+		        //return "url:"+BSEntity.getRooturl()+"---"+"APPID:"+BSEntity.getAPPID()+"---APPSECRET:"+BSEntity.getAPPSECRET();   
+		} 
+}
