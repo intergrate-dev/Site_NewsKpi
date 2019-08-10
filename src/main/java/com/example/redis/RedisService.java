@@ -3,16 +3,21 @@ package com.example.redis;
 import com.alibaba.fastjson.JSON;
 import com.example.util.SerializeUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+
+import java.util.List;
 
 /**
  * redis服务
  */
 @Service
 public class RedisService {
+    private static Logger logger = LoggerFactory.getLogger(RedisService.class);
 
     @Autowired
     JedisPool jedisPool;
@@ -95,6 +100,25 @@ public class RedisService {
 
     }
 
+    public <T> Boolean set(String key, T value, Integer expire) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            String str = SerializeUtil.serialize(value).toString();
+            if (str == null || str.length() <= 0) {
+                return false;
+            }
+            if (expire <= 0) {
+                jedis.set(key, str);
+            } else {
+                jedis.setex(key, expire, str);
+            }
+            return true;
+        } finally {
+            returnToPool(jedis);
+        }
+    }
+
     /**
      * 删除
      */
@@ -121,6 +145,16 @@ public class RedisService {
             //生成真正的key
             String realKey = prefix.getPrefix() + key;
             return jedis.exists(realKey);
+        } finally {
+            returnToPool(jedis);
+        }
+    }
+
+    public <T> boolean exists(String key) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            return jedis.exists(key);
         } finally {
             returnToPool(jedis);
         }
@@ -194,6 +228,38 @@ public class RedisService {
         if (jedis != null) {
             jedis.close();//不是关闭，只是返回连接池
         }
+    }
+
+    public void setList(String key ,List<?> list){
+        Jedis jedis = jedisPool.getResource();
+        try {
+            if (list == null || list.size() == 0) {
+                jedis.set(key.getBytes(), "".getBytes());
+            } else {//如果list为空,则设置一个空
+                jedis.set(key.getBytes(), SerializeUtil.serializeList(list));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            jedis.close();
+        }
+    }
+
+    public List<?> getList(String key) {
+        Jedis jedis = null;
+        byte[] data = null;
+        try {
+            jedis = jedisPool.getResource();
+            if (jedis == null || !jedis.exists(key)) {
+                return null;
+            }
+            data = jedis.get(key.getBytes());
+        } catch (Exception e) {
+            logger.error("Set key error : " + e);
+        } finally {
+            jedis.close();
+        }
+        return SerializeUtil.unserializeList(data);
     }
 
 }

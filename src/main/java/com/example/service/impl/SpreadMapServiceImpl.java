@@ -10,8 +10,12 @@ import java.util.Map;
 import javax.annotation.Resource;
 
 import com.example.bean.*;
+import com.example.service.SiteMonitorService;
 import com.example.util.CommonUtil;
+import com.practice.bus.bean.EnumTask;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +29,8 @@ import com.example.service.SpreadMapService;
 
 @Service
 public class SpreadMapServiceImpl implements  SpreadMapService{
-	
+	private static Logger logger = LoggerFactory.getLogger(SpreadMapServiceImpl.class);
+
 	@Autowired
 	private SpreadMapDao spreadMapDao;
 	@Autowired
@@ -37,11 +42,12 @@ public class SpreadMapServiceImpl implements  SpreadMapService{
 	private BigScreenEntity BSEntity;
 	@Resource
     private HttpAPIService httpAPIService;
-	
+	@Autowired
+	SiteMonitorService siteMonitorService;
+
 	@Override
 	public void addSpreadMap(List<String> pageTypeIds, String mediaId){
 		TokenEntity entoken = tokenGet.getToken();
-		// TODO modify, insert into bs_spreadMap table
 		List<GetTableIdEntity> idList = getTableIdDao.getTableIdList("ucspreadmap");
 		if(idList == null || idList.size()<1 ){
 			return;
@@ -88,47 +94,50 @@ public class SpreadMapServiceImpl implements  SpreadMapService{
 				//map.put("mediaid", "433");
 				map.put("definedtime", definedtime.toString());
 				map.put("datatype", "news");
-				String tokens = httpAPIService.doPost(url, map);
+				String tokens = null;
+				EnumTask enumTask = EnumTask.SPREADMAP;
+				try {
+					tokens = httpAPIService.doPost(url, map);
+				} catch (Exception e) {
+					siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data error");
+					logger.error("=============== method: {} fetch data from api, error: {} ============", enumTask, e.getMessage());
+					e.printStackTrace();
+				}
 				if (!StringUtils.isBlank(tokens)) {
 					JSONObject json = JSONObject.parseObject(tokens);
 					String code = json.getString("errcode");
 					if (code != null && "0".equals(code)) {
 						JSONObject result = json.getJSONObject("result");
-						if(result.size()>0){
-							JSONObject  source = result.getJSONObject("source");
+						if (result.size() > 0) {
+							JSONObject source = result.getJSONObject("source");
 							JSONArray target = result.getJSONArray("target");
-							if(target!=null && target.size()>0){
+							if (target != null && target.size() > 0) {
+								StackTraceElement[] stacks = Thread.currentThread().getStackTrace();
+								siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START, EnumTask.SPREADMAP);
+								logger.info("=============== method: {} mysql update ============", enumTask);
 								//spreadMapDao.delectSpreadMap(mediaid,SITE_ID);
-								String MP_SOURCE = source.getString("area");
-								for(Object tar : target){
-									JSONObject areas = JSONObject.parseObject(tar.toString());
-									String area = areas.getString("sourceProvince");
-									int  count = areas.getIntValue("forwardCount");
-									Date date = new Date();
-									DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-									String time = format.format(date);
-									
-									SpreadMapEntity  spreadMap = new SpreadMapEntity();
-									spreadMap.setSYS_DOCUMENTID(idSum + 1);
-									spreadMap.setSYS_DOCLIBID(doclibid);
-									spreadMap.setSYS_FOLDERID(foldid);
-									spreadMap.setSYS_DELETEFLAG(0);
-									spreadMap.setMP_SITEID(SITE_ID);
-									spreadMap.setMP_AREA(area);
-									spreadMap.setMP_COUNT(count);
-									spreadMap.setMP_MADIAID(Integer.valueOf(mediaid));
-									spreadMap.setMP_CREATETIME(time);
-									spreadMap.setMP_SOURCE(MP_SOURCE);
-									
-									int num = spreadMapDao.addSpreadMap(spreadMap);
-									if(num==1){
-										idSum = idSum+1;										
-									}
+								try {
+									idSum = this.updateSpreadMap(idSum, doclibid, foldid, SITE_ID, mediaid, source, target);
+								} catch (Exception e) {
+									siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+									logger.error("=============== method: {} mysql update, error: {} ============", enumTask, e.getMessage());
+									e.printStackTrace();
 								}
+								siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE, EnumTask.SPREADMAP, null);
+								logger.info("=============== method: {} mysql update complete ============", enumTask);
 							}
+						} else {
+							siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data empty");
+							logger.error("=============== method: {} fetch data from api, error: {} ============", enumTask);
 						}
+					} else {
+						siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+						logger.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
 					}
-				}											
+				} else {
+					siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+					logger.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
+				}
 			}
 		}else{
 			return;
@@ -140,6 +149,35 @@ public class SpreadMapServiceImpl implements  SpreadMapService{
 			getTableIdDao.updateTableId("ucspreadmap", idSum + 1);
 		}
 	}
-	
-	
+
+	private int updateSpreadMap(int idSum, int doclibid, int foldid, String SITE_ID, String mediaid, JSONObject source, JSONArray target) {
+		String MP_SOURCE = source.getString("area");
+		for(Object tar : target){
+			JSONObject areas = JSONObject.parseObject(tar.toString());
+			String area = areas.getString("sourceProvince");
+			int  count = areas.getIntValue("forwardCount");
+			Date date = new Date();
+			DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			String time = format.format(date);
+
+			SpreadMapEntity spreadMap = new SpreadMapEntity();
+			spreadMap.setSYS_DOCUMENTID(idSum + 1);
+			spreadMap.setSYS_DOCLIBID(doclibid);
+			spreadMap.setSYS_FOLDERID(foldid);
+			spreadMap.setSYS_DELETEFLAG(0);
+			spreadMap.setMP_SITEID(SITE_ID);
+			spreadMap.setMP_AREA(area);
+			spreadMap.setMP_COUNT(count);
+			spreadMap.setMP_MADIAID(Integer.valueOf(mediaid));
+			spreadMap.setMP_CREATETIME(time);
+			spreadMap.setMP_SOURCE(MP_SOURCE);
+			int num = spreadMapDao.addSpreadMap(spreadMap);
+			if(num==1){
+				idSum = idSum+1;
+			}
+		}
+		return idSum;
+	}
+
+
 }

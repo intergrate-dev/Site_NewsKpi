@@ -10,7 +10,10 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.example.bean.*;
+import com.example.service.SiteMonitorService;
 import com.example.util.CommonUtil;
+import com.practice.bus.bean.EnumTask;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +22,6 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.example.bean.BigScreenEntity;
-import com.example.bean.EmotionEntity;
-import com.example.bean.OperationEntity;
-import com.example.bean.TokenEntity;
 import com.example.commons.TokenGet;
 import com.example.dao.EmotionDao;
 import com.example.dao.GetTableIdDao;
@@ -42,6 +41,9 @@ public class EmotionServiceImpl implements EmotionService{
 	private BigScreenEntity BSEntity;
 	@Resource
 	private HttpAPIService httpAPIService;
+	@Autowired
+	private SiteMonitorService siteMonitorService;
+
 	@Override
 	public void addEmotion(List<String> pageTypeIds, String mediaId) {
 		String pTypeIds = "72";
@@ -76,7 +78,7 @@ public class EmotionServiceImpl implements EmotionService{
 							for (String kw : kws) {
 								//if (null != kw && !kwList.contains(kw)) {
 									//kwList.add(kw);
-									searchFtsAndInsert(kw, mediaIdV,fileds,pageTypeID);
+									searchFtsAndInsert(kw, mediaIdV,fileds,pageTypeID, oper);
 								//}
 							}
 						}
@@ -88,8 +90,8 @@ public class EmotionServiceImpl implements EmotionService{
 		}
 	}
 	public void searchFtsAndInsert(String leaderKw,
-			String mediaId,
-			String removeWord,String pageTypeID) {
+								   String mediaId,
+								   String removeWord, String pageTypeID, OperationEntity oper) {
 		JSONArray dates = getdata(-30);
 		String keyWord = "";
 		String outWord = "";
@@ -144,12 +146,19 @@ public class EmotionServiceImpl implements EmotionService{
 		//map.put("access_token", token.getTK_TOKEN());		
 		map.put("conditions", conditions.toString());
 		String tokens = null;
-		if("90".equals(mediaId)){
-			tokens = httpAPIService.postMap(url, map,token.getTK_TOKEN());
-		}else{
-			map.put("access_token", token.getTK_TOKEN());
-			tokens = httpAPIService.postMap(url, map,token.getTK_TOKEN());
-		}		
+		EnumTask enumTask = EnumTask.EMOTION;
+		try {
+			if("90".equals(mediaId)){
+				tokens = httpAPIService.postMap(url, map,token.getTK_TOKEN());
+			}else{
+				map.put("access_token", token.getTK_TOKEN());
+				tokens = httpAPIService.postMap(url, map,token.getTK_TOKEN());
+			}
+		} catch (Exception e) {
+			siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data error");
+			log.error("=============== method: {} fetch data from api, error: {} ============", enumTask, e.getMessage());
+			e.printStackTrace();
+		}
 
 		if (!StringUtils.isBlank(tokens)) {
 			JSONObject json = JSONObject.parseObject(tokens);
@@ -161,32 +170,52 @@ public class EmotionServiceImpl implements EmotionService{
 			}		    
 		    if(code==0){
 		    	JSONObject data  = json.getJSONObject("data");
-		    	if(data!=null && data.size()>0){
-		    		if("90".equals(mediaId)){
-		    			leaderKw = "yqrd"+mediaId+pageTypeID;
-		    		}
-		    		int ishave = emotionDao.isHave(leaderKw, mediaId);
-		    		if(ishave>0){
-		    			emotionDao.updateEmotion(leaderKw, mediaId, data.toString());
-		    		}else{
-		    			EmotionEntity emotion = new EmotionEntity();
-		    			emotion.setSiteItem(leaderKw);
-		    			emotion.setEmotion(data.toString());
-		    			emotion.setMediaId(mediaId);
-		    			Date date1 = new Date();
-						DateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-						String time1 = format1.format(date1);
-		    			emotion.setCreateTime(time1);
-		    			emotionDao.addEmotion(emotion);
-		    		}
-		    	}
+				if (data != null && data.size() > 0) {
+					siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START,enumTask);
+					log.info("=============== method: {} mysql update ============", enumTask);
+					try {
+						this.updateEmotion(leaderKw, mediaId, pageTypeID, data);
+					} catch (Exception e) {
+						siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+						log.error("=============== method: {} mysql update, error: {} ============", enumTask, e.getMessage());
+						e.printStackTrace();
+					}
+					siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE,enumTask, null);
+					log.info("=============== method: {} mysql update complete ============", enumTask);
+				}
 		    }else {
 				log.info("站点[" + titleJs.toString() + "]-关键词新闻，数据返回结果为空:"
 						+ tokens + "，当前token=" + token.getTK_TOKEN());
+				siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data empty");
+				log.error("=============== method: {} fetch data from api, error: {} ============", enumTask);
 			}
+		} else {
+			siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+			log.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
 		}
 		//return successNum;
 	}
+
+	private void updateEmotion(String leaderKw, String mediaId, String pageTypeID, JSONObject data) {
+		if ("90".equals(mediaId)) {
+			leaderKw = "yqrd" + mediaId + pageTypeID;
+		}
+		int ishave = emotionDao.isHave(leaderKw, mediaId);
+		if (ishave > 0) {
+			emotionDao.updateEmotion(leaderKw, mediaId, data.toString());
+		} else {
+			EmotionEntity emotion = new EmotionEntity();
+			emotion.setSiteItem(leaderKw);
+			emotion.setEmotion(data.toString());
+			emotion.setMediaId(mediaId);
+			Date date1 = new Date();
+			DateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			String time1 = format1.format(date1);
+			emotion.setCreateTime(time1);
+			emotionDao.addEmotion(emotion);
+		}
+	}
+
 	public JSONArray getdata(int daysum) {
 		JSONArray dataobj = new JSONArray();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

@@ -15,4 +15,5 @@ public enum EnumOperation implements Serializable {
 	EnumOperation(String operation) {
 		this.operation = operation;
 	}
+
 }

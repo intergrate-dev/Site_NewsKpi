@@ -12,7 +12,10 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.example.bean.*;
+import com.example.service.SiteMonitorService;
 import com.example.util.CommonUtil;
+import com.practice.bus.bean.EnumTask;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +24,6 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.example.bean.BigScreenEntity;
-import com.example.bean.OperationEntity;
-import com.example.bean.SiteNewsEntity;
-import com.example.bean.TokenEntity;
 import com.example.commons.DateHelper;
 import com.example.commons.TokenGet;
 import com.example.dao.GetTableIdDao;
@@ -51,6 +50,8 @@ public class KeyWordKpiServiceImpl implements KeyWordKpiService {
     private HttpAPIService httpAPIService;
 
     private static JSONObject dataJson = new JSONObject();
+    @Autowired
+    private SiteMonitorService siteMonitorService;
 
     @Override
     public void addKeyWordKpi(List<String> pageTypeIds, String mediaId) {
@@ -68,6 +69,7 @@ public class KeyWordKpiServiceImpl implements KeyWordKpiService {
                     // 获取关键词
                     JSONObject extfileds = JSONObject.parseObject(oper
                             .getExtfileds());
+                    EnumTask enumTask = EnumTask.KEYWORDNEWS;
                     if (null != extfileds && !extfileds.isEmpty()) {
                         String leaderSel = extfileds.containsKey("leaderSel") ? extfileds
                                 .getString("leaderSel") : null;
@@ -78,10 +80,26 @@ public class KeyWordKpiServiceImpl implements KeyWordKpiService {
                         if (null != kws && kws.length > 0) {
                             String fileds = extfileds.containsKey("removeWord") ? extfileds
                                     .getString("removeWord") : "";
-                            for (int i = 0; i < kws.length; i++) {
-                                searchKeywordKpi(kws[i], sws[i], mediaIdV, fileds, pageTypeID, currentTime, leaderSel, selTime);
+                            siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START, enumTask);
+                            log.info("=============== method: KEYWORDKPI mysql update ============");
+                            try {
+                                for (int i = 0; i < kws.length; i++) {
+                                    searchKeywordKpi(kws[i], sws[i], mediaIdV, fileds, pageTypeID, currentTime, leaderSel, selTime);
+                                }
+                            } catch (Exception e) {
+                                siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+                                log.error("=============== method: KEYWORDNEWS mysql update, error: {} ============", e.getMessage());
+                                e.printStackTrace();
                             }
+                            siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE, enumTask, null);
+                            log.info("=============== method: KEYWORDKPI mysql update complete ============");
+                        } else {
+                            siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "keyword is empty in extfileds");
+                            log.error("=============== method: KEYWORDNEWS , keyword is empty in extfileds  ============");
                         }
+                    } else {
+                        siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "operation's extfileds is empty");
+                        log.error("=============== method: KEYWORDNEWS operation's extfileds is empty  ============");
                     }
                 }
             }

@@ -15,7 +15,7 @@ public class AppConfigFactory {
     public AppPrefix initAppPrefix(){
         AppPrefix.appPrefix = AppPrefix.getInstance();
         AppPrefix.appPrefix.setExpireSeconds(Integer.parseInt(appConfig.getExpire()));
-        AppPrefix.appPrefix.setPrefix(appConfig.getIdentify() + ":" + appConfig.getPrefix() + ":");
+        AppPrefix.appPrefix.setPrefix(appConfig.getIdentify() + "-" + appConfig.getPrefix() + ":");
         return AppPrefix.appPrefix;
     }
 

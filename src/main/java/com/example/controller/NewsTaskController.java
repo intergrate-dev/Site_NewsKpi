@@ -16,7 +16,7 @@ import com.example.service.SiteKpiService;
 import com.example.service.SiteNewsService;
 import com.example.service.SpreadMapService;
 
-//@Component
+@Component
 public class NewsTaskController {
 	private final Logger log = LoggerFactory.getLogger(NewsTaskController.class);
 	@Autowired
