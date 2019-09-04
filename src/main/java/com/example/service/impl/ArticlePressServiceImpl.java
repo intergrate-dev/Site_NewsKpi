@@ -469,10 +469,5 @@ public class ArticlePressServiceImpl implements ArticlePressService {
 		dataobj.add(endtime);
 		return dataobj;
 	}
-	/*
-	 * public static void main(String[] args) { JSONObject obj = new
-	 * JSONObject(); obj.put("increaseUserCount", 1);//净增用户数
-	 * obj.put("userCount", 2);//累计用户数 obj.put("pressCount", 3);//发稿数
-	 * obj.put("originalCount", 4);//原创数 System.out.println(obj.toString()); }
-	 */
+
 }

@@ -127,3 +127,4 @@ public class SiteMonitorServiceImpl implements SiteMonitorService {
         rabbitTemplate.send(RabbitMQConfig.QUEUE_NAME, message);
     }
 }
+
