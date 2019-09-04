@@ -1,0 +1,756 @@
+{
+	"info": {
+		"_postman_id": "fe71d0cc-fcff-4842-83dd-e22f1580de79",
+		"name": "site-news-kpi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Api",
+			"item": [
+				{
+					"name": "1. Api list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://172.19.32.153:8019/api/list",
+							"protocol": "http",
+							"host": [
+								"172",
+								"19",
+								"32",
+								"153"
+							],
+							"port": "8019",
+							"path": [
+								"api",
+								"list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Api siteNews",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8019/api/siteNews?mediaId=110&pageTypeIds=14,15,16,17",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8019",
+							"path": [
+								"api",
+								"siteNews"
+							],
+							"query": [
+								{
+									"key": "mediaId",
+									"value": "110"
+								},
+								{
+									"key": "pageTypeIds",
+									"value": "14,15,16,17"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. articlepress",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://118.31.239.157:8019/api/articlePress?mediaId=90&pageTypeIds=63",
+							"protocol": "http",
+							"host": [
+								"118",
+								"31",
+								"239",
+								"157"
+							],
+							"port": "8019",
+							"path": [
+								"api",
+								"articlePress"
+							],
+							"query": [
+								{
+									"key": "mediaId",
+									"value": "90"
+								},
+								{
+									"key": "pageTypeIds",
+									"value": "63"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Api call artilce origin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://mbdapi.fzdzyun.com/api/transmission/source/article/original?access_token=915bef2f8720dfd33f&keywords=沈裕谋&datatype=app&pagesize=20&sourceids=2138078947,1937836121,-417149749,-1261253614,-1640274588,1727976234,-1072308976,-497951959,2068430885,-110931691&endtime=2019-08-19 12:43:03&sort=2&starttime=2019-07-20 12:43:03",
+							"protocol": "http",
+							"host": [
+								"mbdapi",
+								"fzdzyun",
+								"com"
+							],
+							"path": [
+								"api",
+								"transmission",
+								"source",
+								"article",
+								"original"
+							],
+							"query": [
+								{
+									"key": "access_token",
+									"value": "915bef2f8720dfd33f"
+								},
+								{
+									"key": "keywords",
+									"value": "沈裕谋"
+								},
+								{
+									"key": "datatype",
+									"value": "app"
+								},
+								{
+									"key": "pagesize",
+									"value": "20"
+								},
+								{
+									"key": "sourceids",
+									"value": "2138078947,1937836121,-417149749,-1261253614,-1640274588,1727976234,-1072308976,-497951959,2068430885,-110931691"
+								},
+								{
+									"key": "endtime",
+									"value": "2019-08-19 12:43:03"
+								},
+								{
+									"key": "sort",
+									"value": "2"
+								},
+								{
+									"key": "starttime",
+									"value": "2019-07-20 12:43:03"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Api hostNews",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8019/api/hotNews?mediaId=59&pageTypeIds=14,15",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8019",
+							"path": [
+								"api",
+								"hotNews"
+							],
+							"query": [
+								{
+									"key": "mediaId",
+									"value": "59"
+								},
+								{
+									"key": "pageTypeIds",
+									"value": "14,15"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8. Api call article origin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://mbdapi.fzdzyun.com/api/transmission/source/article/original?access_token=915bef2f8720dfd33f&datatype= news&pagesize= 15&sourceids=-463541501&endtime=2019-08-22 13:51:51&page= 1&sort= 2&starttime= 2019-08-15 13:51:51",
+							"protocol": "http",
+							"host": [
+								"mbdapi",
+								"fzdzyun",
+								"com"
+							],
+							"path": [
+								"api",
+								"transmission",
+								"source",
+								"article",
+								"original"
+							],
+							"query": [
+								{
+									"key": "access_token",
+									"value": "915bef2f8720dfd33f"
+								},
+								{
+									"key": "datatype",
+									"value": " news"
+								},
+								{
+									"key": "pagesize",
+									"value": " 15"
+								},
+								{
+									"key": "sourceids",
+									"value": "-463541501"
+								},
+								{
+									"key": "endtime",
+									"value": "2019-08-22 13:51:51"
+								},
+								{
+									"key": "page",
+									"value": " 1"
+								},
+								{
+									"key": "sort",
+									"value": " 2"
+								},
+								{
+									"key": "starttime",
+									"value": " 2019-08-15 13:51:51"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "9. api fts document",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "test",
+			"item": [
+				{
+					"name": "#test. news test",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8019/news/test",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8019",
+							"path": [
+								"news",
+								"test"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "#test. news keyword",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8019/news/keyword",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8019",
+							"path": [
+								"news",
+								"keyword"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "test.Doc",
+			"item": [
+				{
+					"name": "1. create doc",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8019/doc/createDoc",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8019",
+							"path": [
+								"doc",
+								"createDoc"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Doc(ESPractice)",
+			"item": [
+				{
+					"name": "onece",
+					"item": [
+						{
+							"name": "1. siteMonitor mapping",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/doc/mappingSiteInfo",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"doc",
+										"mappingSiteInfo"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "2. delete doc (Api)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "\r\n{\r\n   \"query\": {\r\n      \"match\": {\r\n         \"siteName\":\"杭州滨江新闻网\"\r\n      }\r\n   }\r\n}"
+								},
+								"url": {
+									"raw": "http://172.19.207.201:9200/sitemonitor/_delete_by_query",
+									"protocol": "http",
+									"host": [
+										"172",
+										"19",
+										"207",
+										"201"
+									],
+									"port": "9200",
+									"path": [
+										"sitemonitor",
+										"_delete_by_query"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "1. create doc",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/doc/createDoc",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doc",
+								"createDoc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. index info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://172.19.207.201:9200/sitemonitor_1",
+							"protocol": "http",
+							"host": [
+								"172",
+								"19",
+								"207",
+								"201"
+							],
+							"port": "9200",
+							"path": [
+								"sitemonitor_1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. siteMonitor create",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/doc/createSiteInfo",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doc",
+								"createSiteInfo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. siteMonitor modify",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/doc/modifySiteInfo",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doc",
+								"modifySiteInfo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. search (Api)",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"size\": 30,\n    \"query\": {\n        \"match\": {\n        \t\"id\": \"sid_001\"\n        }\n    },\n    \"sort\": [\n        {\n            \"updateTime\": {\n                \"order\": \"asc\"\n            }\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "http://172.19.207.201:9200/sitemonitor_1/_search",
+							"protocol": "http",
+							"host": [
+								"172",
+								"19",
+								"207",
+								"201"
+							],
+							"port": "9200",
+							"path": [
+								"sitemonitor_1",
+								"_search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. siteMonitor query",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/doc/querySiteInfo?pageNo=2&limit=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doc",
+								"querySiteInfo"
+							],
+							"query": [
+								{
+									"key": "pageNo",
+									"value": "2"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ES(es-client-demo)",
+			"item": [
+				{
+					"name": "1. user add-index",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"userId\": \"001\",\n\t\"name\": \"user_01\",\n\t\"age\": 18,\n\t\"birthday\": \"2019-06-23\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8090/user/add-index?",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"user",
+								"add-index"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "001",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "user_01",
+									"disabled": true
+								},
+								{
+									"key": "age",
+									"value": "23",
+									"disabled": true
+								},
+								{
+									"key": "birthday",
+									"value": "2019-03-23",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. user get-index",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"userId\": \"001\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8090/user/get-index",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"user",
+								"get-index"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. user index info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:9200/user",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "9200",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. modify index",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"userId\": \"001\",\n\t\"name\": \"lixiao\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8090/user/upd-index",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"user",
+								"upd-index"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. DSL query add",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Douglas\",\n    \"last_name\": \"Fir\",\n    \"age\": 35,\n    \"about\": \"I like to build cabinets\",\n    \"interests\": [\n        \"forestry\"\n    ]\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:9200/megacorp/employee/3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "9200",
+							"path": [
+								"megacorp",
+								"employee",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. search",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"query\": {\n        \"bool\": {\n            \"must\": [\n                {\n                    \"match\": {\n                        \"last_name\": \"Smith\"\n                    }\n                }\n            ],\n            \"filter\": [\n                {\n                    \"range\": {\n                        \"age\": {\n                            \"gte\": \"25\"\n                        }\n                    }\n                }\n            ]\n        }\n    }\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:9200/megacorp/employee/_search",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "9200",
+							"path": [
+								"megacorp",
+								"employee",
+								"_search"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

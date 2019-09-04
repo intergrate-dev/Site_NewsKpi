@@ -2,6 +2,8 @@ package com.example.controller;
 
 import java.text.SimpleDateFormat;
 
+import com.example.bean.TokenEntity;
+import com.example.commons.TokenGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,18 +46,17 @@ public class TestController {
     private EventTrackService eventTrack;
     @Autowired
     private SpreadMapService SpreadMap;
+    @Autowired
+    TokenGet tokenGet;
 
     @RequestMapping("/test")
     public @ResponseBody
     String test1() throws Exception {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        System.out.println(df.format(System.currentTimeMillis()) + "开始");
-        sitenews.addSiteNews(null, null);
-        //sitenews.addKeyWordNews();
-        //sitenews.addZlmtNews();
-        //sitenews.addSiteNews();
-        System.out.println(df.format(System.currentTimeMillis()) + "结束");
-        return "haha";
+        TokenEntity token = tokenGet.getToken();
+        logger.info("========= access_token: {} ==================", token.getTK_TOKEN());
+        /*SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sitenews.addSiteNews(null, null);*/
+        return token.getTK_TOKEN();
     }
 
     @RequestMapping("/KeyWordKpi")

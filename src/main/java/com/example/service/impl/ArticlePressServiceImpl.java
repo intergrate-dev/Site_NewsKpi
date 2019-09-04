@@ -12,8 +12,10 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import com.example.bean.ArticleNewsKpiEntity;
+import com.example.bean.*;
+import com.example.service.SiteMonitorService;
 import com.example.util.CommonUtil;
+import com.practice.bus.bean.EnumTask;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +24,6 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.example.bean.BigScreenEntity;
-import com.example.bean.OperationEntity;
-import com.example.bean.TokenEntity;
 import com.example.commons.TokenGet;
 import com.example.dao.ArticlePressDao;
 import com.example.http.HttpAPIService;
@@ -32,8 +31,8 @@ import com.example.service.ArticlePressService;
 
 @Service
 public class ArticlePressServiceImpl implements ArticlePressService {
-	private final Logger log = LoggerFactory
-			.getLogger(ArticlePressServiceImpl.class);
+	private final Logger logger = LoggerFactory.getLogger(ArticlePressServiceImpl.class);
+
 	@Autowired
 	private ArticlePressDao articlePress;
 	@Autowired
@@ -42,6 +41,8 @@ public class ArticlePressServiceImpl implements ArticlePressService {
 	private BigScreenEntity BSEntity;
 	@Resource
 	private HttpAPIService httpAPIService;
+	@Autowired
+	private SiteMonitorService siteMonitorService;
 
 	private static final String ORIGINAL_PAGESIZE = "20"; // 原创新闻返回数据量
 	private static JSONObject dataJson = new JSONObject();
@@ -64,7 +65,7 @@ public class ArticlePressServiceImpl implements ArticlePressService {
 					String[] words = keyword.split(",");
 					for (String word : words) {
 						if (!isget.contains(siteId + word)) {
-							successNum = insertNews(siteId, word, mediaIdV);
+							successNum = insertNews(siteId, word, mediaIdV, oper);
 						}
 						if (successNum > 0) {
 							isget.add(siteId + word);
@@ -72,7 +73,7 @@ public class ArticlePressServiceImpl implements ArticlePressService {
 					}
 				} else {
 					if (!isget.contains(siteId)) {
-						successNum = insertNews(siteId, keyword, mediaIdV);
+						successNum = insertNews(siteId, keyword, mediaIdV, oper);
 					}
 					if (successNum > 0) {
 						isget.add(siteId);
@@ -85,7 +86,7 @@ public class ArticlePressServiceImpl implements ArticlePressService {
 		}
 	}
 
-	public int insertNews(String SITE_ID, String keyword, String mediaId) {
+	public int insertNews(String SITE_ID, String keyword, String mediaId, OperationEntity oper) {
 		int successNum = 0;
 		List<String> issend = new ArrayList<String>();
 		TokenEntity token = tokenGet.getToken();
@@ -99,7 +100,7 @@ public class ArticlePressServiceImpl implements ArticlePressService {
 		map.put("access_token", token.getTK_TOKEN());
 		map.put("pagesize", ORIGINAL_PAGESIZE);
 		map.put("sourceids", SITE_ID);
-		// map.put("mediaid","443");
+		map.put("mediaid","443");
 		if (keyword != null && !"无需配置".equals(keyword)) {
 			map.put("keywords", keyword.trim());
 		}else{
@@ -110,93 +111,119 @@ public class ArticlePressServiceImpl implements ArticlePressService {
 		map.put("starttime", dateobj.get(0).toString());
 		map.put("endtime", dateobj.get(1).toString());
 
-		String tokens = httpAPIService.doPost(url, map);
+		String tokens = null;
+		EnumTask enumTask = EnumTask.ARTICLEPRESS;
+		try {
+			tokens = httpAPIService.doPost(url, map);
+		} catch (Exception e) {
+			siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data error");
+			logger.error("=============== method: {} fetch data from api, error: {} ============", enumTask, e.getMessage());
+			e.printStackTrace();
+		}
+
 		if (!StringUtils.isBlank(tokens)) {
 			JSONObject json = JSONObject.parseObject(tokens);
 			JSONArray documents = json.getJSONArray("documents");
 			if (documents != null && documents.size() > 0) {
-				/*if (!mediaId.equals("92")) {
-					return 0;
-				}*/
-				log.info("站点[" + SITE_ID + "]-文章传播分析，数据返回结果:"
+				logger.info("站点[" + SITE_ID + "]-文章传播分析，数据返回结果:"
 						+ documents.size());
-				for (Object obj : documents) {
-					JSONObject jsonobj = JSONObject.parseObject(obj.toString());
-					String title = jsonobj.getString("title").trim();
-					if (issend != null && issend.size() > 0
-							&& issend.contains(title)) {
-						continue;
-					}
-					if (jsonobj.getIntValue("forwardCount") == 0) {
-						continue;
-					}
-					ArticleNewsKpiEntity articleNews = new ArticleNewsKpiEntity();
-					Date date = new Date();
-					DateFormat format = new SimpleDateFormat(
-							"yyyy-MM-dd HH:mm:ss");
-					String time = format.format(date);
-					articleNews.setCreatTime(time);
-					String id = jsonobj.getString("id");
-					articleNews.setId(id);
-					log.info("--------------------------------- insertNews start mediaId:{}, keyword: {}, id: {}, title: {}, createTime: {}",
-							mediaId, keyword, jsonobj.getString("id"), title, time);
-					articleNews.setTitle(title);
-					String pubtime = jsonobj.getString("pubdate");
-					articleNews.setPubtime(pubtime);
-					articleNews.setSource(jsonobj.getString("source"));
-					articleNews.setChannel(jsonobj.getString("channel"));
-					JSONObject forwards = getForwardCount(id,
-							token.getTK_TOKEN(),jsonobj.getString("pubdate"));
-					articleNews.setForwardCount(forwards
-							.getString("forwardCount"));
-					articleNews.setForwardMediaCount(forwards
-							.getString("forwardMediaCount"));
-					JSONArray medialist = getForwardMediaList(id,
-							token.getTK_TOKEN(), jsonobj.getString("pubdate"));
-					articleNews.setForwardMediaList(medialist.toString());
-					JSONArray newslist = getForwardNewsList(id,
-							token.getTK_TOKEN());
-					articleNews.setForwardNewsList(newslist.toString());
-					JSONObject kiptrend = getForwardKpiTrend(id,
-							token.getTK_TOKEN(), pubtime);
-					articleNews.setForwardKpiTrend(kiptrend.toString());
-					JSONObject press = getPress(id, token.getTK_TOKEN());
-					articleNews.setPressTypes(press.getJSONArray("pressTypes")
-							.toString());
-					articleNews.setPressDistribution(press.getJSONArray(
-							"pressDistribution").toString());
-					articleNews.setSiteId(SITE_ID);
-					if (keyword != null && !"无需配置".equals(keyword)) {
-						articleNews.setKeyword(keyword.trim());
-					} else {
-						articleNews.setKeyword("0");
-						keyword = "0";
-					}
-					/*int m = articlePress.isHave(id, SITE_ID, keyword);
-					String mediaId = BSEntity.getMediaId();*/
-					/*int m = articlePress.isHave(id, mediaId, keyword);
-					if (m != 0) {
-						articlePress.deleteArticlePress(mediaId,id,0, null);
-					}*/
-					articlePress.deleteArticlePress(mediaId,id,0, null);
-					articleNews.setMediaId(mediaId);
-					int num = articlePress.addArticlePress(articleNews);
-					if (num == 1) {
-						successNum++;
-						issend.add(title);
-					} else {
-						log.error("文章传播分析 添加失败！title=" + articleNews.getTitle());
-					}
-					if (successNum > 4) {
-						break;
-					}
+				siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START, EnumTask.ARTICLEPRESS);
+				logger.info("=============== method: {} mysql update ============", enumTask);
+				try {
+					successNum = this.updateArticlePress(SITE_ID, keyword, mediaId, successNum, issend, token, documents);
+				} catch (Exception e) {
+					siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+					logger.error("=============== method: {} mysql update, error: {} ============", enumTask, e.getMessage());
+					e.printStackTrace();
 				}
-				articlePress.deleteArticlePress(mediaId, null, 1, keyword);
+				siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE, EnumTask.ARTICLEPRESS, null);
+				logger.info("=============== method: {} mysql update complete ============", enumTask);
 			} else {
-				log.info("站点[" + SITE_ID + "]-文章传播分析数据返回结果为空:" + tokens
+				logger.info("站点[" + SITE_ID + "]-文章传播分析数据返回结果为空:" + tokens
 						+ "，当前token=" + token.getTK_TOKEN());
+				siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data empty");
+				logger.error("=============== method: {} fetch data from api, error: {} ============", enumTask);
+			}
+		} else {
+			siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+			logger.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
+		}
+		return successNum;
+	}
+
+	private int updateArticlePress(String SITE_ID, String keyword, String mediaId, int successNum, List<String> issend, TokenEntity token, JSONArray documents) {
+		for (Object obj : documents) {
+			JSONObject jsonobj = JSONObject.parseObject(obj.toString());
+			String title = jsonobj.getString("title").trim();
+			if (issend != null && issend.size() > 0
+					&& issend.contains(title)) {
+				continue;
+			}
+			if (jsonobj.getIntValue("forwardCount") == 0) {
+				continue;
+			}
+			ArticleNewsKpiEntity articleNews = new ArticleNewsKpiEntity();
+			Date date = new Date();
+			DateFormat format = new SimpleDateFormat(
+					"yyyy-MM-dd HH:mm:ss");
+			String time = format.format(date);
+			articleNews.setCreatTime(time);
+			String id = jsonobj.getString("id");
+			articleNews.setId(id);
+			logger.info("--------------------------------- insertNews start mediaId:{}, keyword: {}, id: {}, title: {}, createTime: {}",
+					mediaId, keyword, jsonobj.getString("id"), title, time);
+			articleNews.setTitle(title);
+			String pubtime = jsonobj.getString("pubdate");
+			articleNews.setPubtime(pubtime);
+			articleNews.setSource(jsonobj.getString("source"));
+			articleNews.setChannel(jsonobj.getString("channel"));
+			JSONObject forwards = getForwardCount(id,
+					token.getTK_TOKEN(),jsonobj.getString("pubdate"));
+			articleNews.setForwardCount(forwards
+					.getString("forwardCount"));
+			articleNews.setForwardMediaCount(forwards
+					.getString("forwardMediaCount"));
+			JSONArray medialist = getForwardMediaList(id,
+					token.getTK_TOKEN(), jsonobj.getString("pubdate"));
+			articleNews.setForwardMediaList(medialist.toString());
+			JSONArray newslist = getForwardNewsList(id,
+					token.getTK_TOKEN());
+			articleNews.setForwardNewsList(newslist.toString());
+			JSONObject kiptrend = getForwardKpiTrend(id,
+					token.getTK_TOKEN(), pubtime);
+			articleNews.setForwardKpiTrend(kiptrend.toString());
+			JSONObject press = getPress(id, token.getTK_TOKEN());
+			articleNews.setPressTypes(press.getJSONArray("pressTypes")
+					.toString());
+			articleNews.setPressDistribution(press.getJSONArray(
+					"pressDistribution").toString());
+			articleNews.setSiteId(SITE_ID);
+			if (keyword != null && !"无需配置".equals(keyword)) {
+				articleNews.setKeyword(keyword.trim());
+			} else {
+				articleNews.setKeyword("0");
+				keyword = "0";
+			}
+			/*int m = articlePress.isHave(id, SITE_ID, keyword);
+			String mediaId = BSEntity.getMediaId();*/
+			/*int m = articlePress.isHave(id, mediaId, keyword);
+			if (m != 0) {
+				articlePress.deleteArticlePress(mediaId,id,0, null);
+			}*/
+			articlePress.deleteArticlePress(mediaId,id,0, null);
+			articleNews.setMediaId(mediaId);
+			int num = articlePress.addArticlePress(articleNews);
+			if (num == 1) {
+				successNum++;
+				issend.add(title);
+			} else {
+				logger.error("文章传播分析 添加失败！title=" + articleNews.getTitle());
+			}
+			if (successNum > 4) {
+				break;
 			}
 		}
+		articlePress.deleteArticlePress(mediaId, null, 1, keyword);
 		return successNum;
 	}
 

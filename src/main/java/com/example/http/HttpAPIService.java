@@ -204,7 +204,7 @@ public class HttpAPIService {
 		String context = StringUtils.EMPTY;
 		try {
 			httpPost = new HttpPost(url);
-			httpPost.setConfig(config);
+			//httpPost.setConfig(config);
 			if (param != null) {
 				List<NameValuePair> paramList = new ArrayList<NameValuePair>();
 				for (String key : param.keySet()) {
@@ -280,7 +280,7 @@ public class HttpAPIService {
 		String context = StringUtils.EMPTY;
 		try {
 			httpPost = new HttpPost(url);
-			httpPost.setConfig(config);
+			//httpPost.setConfig(config);
 			if (param != null) {
 				List<NameValuePair> paramList = new ArrayList<NameValuePair>();
 				for (String key : param.keySet()) {

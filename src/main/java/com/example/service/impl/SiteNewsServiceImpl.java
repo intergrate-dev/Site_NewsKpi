@@ -8,7 +8,10 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Resource;
 
+import com.example.bean.*;
+import com.example.service.SiteMonitorService;
 import com.example.util.CommonUtil;
+import com.practice.bus.bean.EnumTask;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +20,6 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.example.bean.BigScreenEntity;
-import com.example.bean.OperationEntity;
-import com.example.bean.SiteNewsEntity;
-import com.example.bean.TokenEntity;
 import com.example.commons.DateHelper;
 import com.example.commons.TokenGet;
 import com.example.dao.GetTableIdDao;
@@ -42,6 +41,8 @@ public class SiteNewsServiceImpl implements SiteNewsService {
     private BigScreenEntity BSEntity;
     @Resource
     private HttpAPIService httpAPIService;
+    @Autowired
+    private SiteMonitorService siteMonitorService;
 
     private static final String HOT_PAGESIZE = "6"; // 热点新闻返回数据量，orig=3||4
     private static final String ORIGINAL_PAGESIZE = "8"; // 原创新闻返回数据量
@@ -59,12 +60,17 @@ public class SiteNewsServiceImpl implements SiteNewsService {
         String currentTime = DateHelper.parse2String(new Date(),
                 DateHelper.DateFormat.YMDHMS);
         log.info("[站点新闻-普通新闻]，删除数据时间节点：" + currentTime);
-        String pTypeIds = "14,15,16,17,18,20,23,24,49,64,65,81,82,83";
-        pTypeIds = CommonUtil.setPageTypeIds(pageTypeIds, pTypeIds);
+        /*String pTypeIds = "14,15,16,17,18,20,23,24,49,64,65,81,82,83";
+        pTypeIds = CommonUtil.setPageTypeIds(pageTypeIds, pTypeIds);*/
+
+        String pTypeIds = "69";
+        mediaId = "108";
+
         List<OperationEntity> opList = siteNewsDao.selectSiteNewsId(pTypeIds, mediaId);
         JSONArray isGeten = new JSONArray();
-        String[] ptIDs = {"14", "15", "16", "17", "18", "20", "23", "24",
-                "49", "64", "65", "81", "82", "83"};
+        /*String[] ptIDs = {"14", "15", "16", "17", "18", "20", "23", "24",
+                "49", "64", "65", "81", "82", "83"};*/
+        String[] ptIDs = {"69"};
         List<String> ptList = Arrays.asList(ptIDs);
         if (opList != null && opList.size() > 0) {
             String pageTypeID = "";
@@ -101,7 +107,7 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                             sType = TYPEs[m].toLowerCase();
                         }
                         int successNum = insertNews(sid[m], sType, pageTypeID,
-                                0);
+                                0, oper);
                         if (successNum > 0) {
                             clearData(sid[m], 0, currentTime, successNum);
                         }
@@ -137,14 +143,14 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                 if ("11".equals(pageTypeID)) {
                     siteList = insertOriNews(oper.getSITE_ID(),
                             oper.getSITE_TYPE(), 1, pageTypeID, currentTime,
-                            siteList);
+                            siteList, oper);
                 } else if ("79".equals(pageTypeID)) {
 
                     siteList = insertOriNews(oper.getSITE_ID(),
                             oper.getSITE_TYPE(), 1, pageTypeID, currentTime,
-                            siteList);
+                            siteList, oper);
                     insertOriNews(oper.getSITE_ID(), oper.getSITE_TYPE(), 2,
-                            pageTypeID, currentTime, siteList);
+                            pageTypeID, currentTime, siteList, oper);
                     // 按照站点执行删除操作
                     /*
                      * if(resultMap.size()>0){ for(Map.Entry<String, Integer>
@@ -198,12 +204,12 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                             continue;
                         }
                         int success_today = insertHotNews(sid[m], sType,
-                                pageTypeID, 3); // 今日热点
+                                pageTypeID, 3, oper); // 今日热点
                         if (success_today > 0) {
                             clearData(sid[m], 3, currentTime, success_today);
                         }
                         int success_week = insertHotNews(sid[m], sType,
-                                pageTypeID, 4); // 本周热点
+                                pageTypeID, 4, oper); // 本周热点
                         if (success_week > 0) {
                             clearData(sid[m], 4, currentTime, success_week);
                         }
@@ -258,7 +264,7 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                                     && !kwList.contains(areaKw)) {
                                 kwList.add(areaKw);
                                 insertNewsByFts(area, null, pageTypeID,
-                                        currentTime, "", null, null, null);
+                                        currentTime, "", null, null, null, oper);
                             }
                         }
                     }
@@ -290,7 +296,7 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                                 kwList.add(kw);
                                 // 关键词数组中不包含当前关键词，则需要调用接口添加数据
                                 insertNewsByFts(null, kw, pageTypeID,
-                                        currentTime, fileds, maidid, leaderSel, selTime);
+                                        currentTime, fileds, maidid, leaderSel, selTime, oper);
                                 /*
                                  * if("90".equals(maidid)&&"72".equals(pageTypeID
                                  * )){ insertxingsha(maidid,kw,pageTypeID,
@@ -316,7 +322,7 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                                     kwList.add(kw);
                                     // 关键词数组中不包含当前关键词，则需要调用接口添加数据
                                     insertNewsByFts(null, kw, pageTypeID,
-                                            currentTime, fileds, maidid, null, null);
+                                            currentTime, fileds, maidid, null, null, oper);
                                 }
                             }
                         }
@@ -360,7 +366,7 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                             || "70".equals(pageTypeID)) {
                         // 关键词数组中不包含当前关键词，则需要调用接口添加数据
                         insertNewsByMadia(mediaIdV, sites, types, config,
-                                pageTypeID, currentTime, fileds, null, null);
+                                pageTypeID, currentTime, fileds, null, null, oper);
                     } else if ("45".equals(pageTypeID)) {
                         String leaderSel = extfileds.containsKey("leaderSel") ? extfileds
                                 .getString("leaderSel") : null;
@@ -372,7 +378,7 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                                     || types.contains("WEIBO")
                                     || types.contains("WECHAT")) {
                                 insertNewsByMadia(mediaIdV, sites, types, con,
-                                        pageTypeID, currentTime, fileds, leaderSel, selTime);
+                                        pageTypeID, currentTime, fileds, leaderSel, selTime, oper);
                             }
                         }
                     }
@@ -393,9 +399,10 @@ public class SiteNewsServiceImpl implements SiteNewsService {
      * @param pageTypeID
      * @param currentTime
      * @param removeWord
+     * @param oper
      */
     public void insertxingsha(String mediaId, String leaderKw,
-                              String pageTypeID, String currentTime, String removeWord) {
+                              String pageTypeID, String currentTime, String removeWord, OperationEntity oper) {
         JSONArray dates = getdata(-30);
         String sites = "-417149749";
         String channelid = "2031035781";
@@ -406,12 +413,12 @@ public class SiteNewsServiceImpl implements SiteNewsService {
         JSONArray sort = new JSONArray();
         sort.add(sorts);
         int success_leaderKw = searchMadiaAndInsert(mediaId, sites, types,
-                leaderKw, pageTypeID, dates, sort, removeWord, channelid, null);
+                leaderKw, pageTypeID, dates, sort, removeWord, channelid, null, oper);
         if (success_leaderKw > 0) {
             clearData(sites + pageTypeID, 0, currentTime, success_leaderKw);
         } else {
             success_leaderKw = searchMadiaAndInsert(mediaId, sites, types,
-                    leaderKw, pageTypeID, dates, sort, removeWord, null, null);
+                    leaderKw, pageTypeID, dates, sort, removeWord, null, null, oper);
             if (success_leaderKw > 0) {
                 clearData(sites + pageTypeID, 0, currentTime, success_leaderKw);
             }
@@ -429,10 +436,11 @@ public class SiteNewsServiceImpl implements SiteNewsService {
      * @param removeWord
      * @param leaderSel
      * @param selTime
+     * @param oper
      */
     public void insertNewsByMadia(String mediaId, String sites, String types,
                                   String leaderKw, String pageTypeID, String currentTime,
-                                  String removeWord, String leaderSel, String selTime) {
+                                  String removeWord, String leaderSel, String selTime, OperationEntity oper) {
         JSONArray dates = null;
         if (selTime != null && !"".equals(selTime) && "7D".equals(selTime)) {
             dates = getdata(-7);
@@ -453,11 +461,11 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                         leaderKw, pageTypeID, dates, sort, removeWord);
             } else {
                 success_leaderKw = searchMadiaAndInsert(mediaId, sites, types,
-                        leaderKw, pageTypeID, dates, sort, removeWord, null, leaderSel);
+                        leaderKw, pageTypeID, dates, sort, removeWord, null, leaderSel, oper);
             }
         } else {
             success_leaderKw = searchMadiaAndInsert(mediaId, sites, types,
-                    leaderKw, pageTypeID, dates, sort, removeWord, null, leaderSel);
+                    leaderKw, pageTypeID, dates, sort, removeWord, null, leaderSel, oper);
         }
         // 领导人活动关键词
 
@@ -545,6 +553,7 @@ public class SiteNewsServiceImpl implements SiteNewsService {
         conditions.put("title", titleJs);
         conditions.put("duplicate", "1");
 
+        // TODO bs_sitenews
         TokenEntity token = tokenGet.getToken();
         String url = BSEntity.getRooturl() + "/api/fts";
         int ishongwang = 0;
@@ -685,11 +694,12 @@ public class SiteNewsServiceImpl implements SiteNewsService {
      * @param removeWord
      * @param channelid
      * @param leaderSel
+     * @param oper
      * @return
      */
     public int searchMadiaAndInsert(String mediaId, String sites, String types,
                                     String leaderKw, String pageTypeID, JSONArray dates,
-                                    JSONArray sort, String removeWord, String channelid, String leaderSel) {
+                                    JSONArray sort, String removeWord, String channelid, String leaderSel, OperationEntity oper) {
         JSONArray siteids = new JSONArray();
         JSONArray wechatid = new JSONArray();
         JSONArray weiboid = new JSONArray();
@@ -806,6 +816,7 @@ public class SiteNewsServiceImpl implements SiteNewsService {
          * conditions.put("channelRank",Rank);
          */
 
+        // TODO bs_sitenews
         TokenEntity token = tokenGet.getToken();
         String url = BSEntity.getRooturl() + "/api/fts";
         Map<String, String> map = new HashMap<String, String>();
@@ -818,7 +829,15 @@ public class SiteNewsServiceImpl implements SiteNewsService {
 
         map.put("conditions", conditions.toString());
         map.put("sorts", sort.toString());
-        String tokens = httpAPIService.doPost(url, map);
+        String tokens = null;
+        EnumTask enumTask = EnumTask.ZLMTNEWS;
+        try {
+            tokens = httpAPIService.doPost(url, map);
+        } catch (Exception e) {
+            siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data error");
+            log.error("=============== method: {} fetch data from api, error: {} ============", enumTask, e.getMessage());
+            e.printStackTrace();
+        }
 
         if (!StringUtils.isBlank(tokens)) {
             JSONObject json = JSONObject.parseObject(tokens);
@@ -827,108 +846,127 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                 int total = json.getIntValue("total");
                 log.info("站点[" + titleJs.toString() + "]-关键词新闻，数据返回结果:"
                         + documents.size());
-                // TODO JOIN(START)
-                // TODO TRY_CATCH, WHEN EXCEPTION OCCUR JOIN(WARN)
-                for (Object obj : documents) {
-                    JSONObject jsonobj = JSONObject.parseObject(obj.toString());
-                    String id = jsonobj.getString("id");
-                    SiteNewsEntity kpiEntity = new SiteNewsEntity();
-                    kpiEntity.setSYS_DELETEFLAG(0);
-                    Date date = new Date();
-                    DateFormat format = new SimpleDateFormat(
-                            "yyyy-MM-dd HH:mm:ss");
-                    String time = format.format(date);
-                    kpiEntity.setSN_LASTMODIFIED(time);
-                    kpiEntity.setSN_ID(id);
-                    String titles = jsonobj.getString("title");
-                    if (titles == null || "".equals(titles)) {
-                        continue;
-                    }
-                    String centent = filterEmoji(titles, "*");
-                    if (!isChinaWord(centent)) {
-                        continue;
-                    }
-                    title = centent;
-                    kpiEntity.setSN_TITLE(titles);
-                    kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
-                    kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
-                    String summary = jsonobj.getString("summary");
-                    if (summary != null && !"".equals(summary)) {
-                        String summarys = filterEmoji(summary, "*");
-                        if (!isChinaWord(summarys)) {
-                            continue;
-                        }
-                        summary = summarys;
-                        kpiEntity.setSN_SUMMARY(summary);
-                    }
-                    String words = jsonobj.getString("keywords");
-                    if (words != null && !"".equals(words)) {
-                        String EmojiWord = filterEmoji(words, "*");
-                        if (!isChinaWord(EmojiWord)) {
-                            continue;
-                        }
-                        if (EmojiWord != null && EmojiWord.length() > 254) {
-                            EmojiWord = EmojiWord.substring(0, 254);
-                        }
-                        kpiEntity.setSN_KEYWORDS(EmojiWord);
-                    }
-                    if (jsonobj.getString("dataType") != null
-                            && "wechat".equals(jsonobj.getString("dataType"))) {
-                        kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
-                                + "-微信");
-                    } else {
-                        kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
-                    }
-
-                    kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
-                    kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
-                    kpiEntity.setSN_CHANNELID(jsonobj.getString("channelId"));
-                    kpiEntity.setSN_VISITCOUNT(jsonobj
-                            .getIntValue("visitCount"));
-                    kpiEntity.setSN_REBACKCOUNT(jsonobj
-                            .getIntValue("rebackCount"));
-                    kpiEntity.setSN_LIKECOUNT(jsonobj.getIntValue("likeCount"));
-                    kpiEntity.setSN_PRESSCOUNT(total);
-                    kpiEntity.setSN_FORWARDCOUNT(jsonobj
-                            .getIntValue("forwardCount"));
-                    kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
-                    kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
-                    // String originalPicUrl =
-                    /*
-                     * if(originalPicUrl!=null && "".equals(originalPicUrl)){
-                     * String[] picurls = originalPicUrl.split(";");
-                     * kpiEntity.setSN_ORIGINALPICURL(picurls[0]); }
-                     */
-                    // kpiEntity.setSN_ORIGINALPICURL(jsonobj.getString("originalPicUrl"));
-
-                    kpiEntity.setSN_ORIGINAL(0);
-                    kpiEntity.setSN_ISHOW(1);
-                    kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
-                    if ("72".equals(pageTypeID)) {
-                        kpiEntity.setSN_SITETERM(sites + pageTypeID);
-                    } else {
-                        kpiEntity
-                                .setSN_SITETERM(mediaId + keyWord + pageTypeID);
-                    }
-
-                    String con = getNews(jsonobj.getString("id"));
-                    kpiEntity.setSN_DOCUMENT(con);
-                    int num = siteNewsDao.addSiteNews(kpiEntity);
-                    if (num == 1) {
-                        dataJson.put(id, jsonobj.getString("title"));
-                        successNum++;
-                    } else {
-                        log.error("站点[" + titleJs.toString()
-                                + "]-关键词新闻，添加失败！title="
-                                + kpiEntity.getSN_TITLE());
-                    }
+                siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START, enumTask);
+                log.info("=============== method: {} mysql update ============", enumTask);
+                try {
+                    successNum = this.updateZLMTNews(mediaId, sites, pageTypeID, successNum, keyWord, titleJs, documents, total);
+                } catch (Exception e) {
+                    siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+                    log.error("=============== method: {} mysql update, error: {} ============", enumTask, e.getMessage());
+                    e.printStackTrace();
                 }
+                siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE, enumTask, null);
+                log.info("=============== method: {} mysql update complete ============", enumTask);
             } else {
                 log.info("站点[" + titleJs.toString() + "]-关键词新闻，数据返回结果为空:"
                         + tokens + "，当前token=" + token.getTK_TOKEN());
+                siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data empty");
+                log.error("=============== method: {} fetch data from api, error: {} ============", enumTask);
             }
+        } else {
+            siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+            log.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
         }
         // JOIN(COMPLETE COMMIT)
+        return successNum;
+    }
+
+    private int updateZLMTNews(String mediaId, String sites, String pageTypeID, int successNum, String keyWord, JSONArray titleJs, JSONArray documents, int total) {
+        String title;
+        for (Object obj : documents) {
+            JSONObject jsonobj = JSONObject.parseObject(obj.toString());
+            String id = jsonobj.getString("id");
+            SiteNewsEntity kpiEntity = new SiteNewsEntity();
+            kpiEntity.setSYS_DELETEFLAG(0);
+            Date date = new Date();
+            DateFormat format = new SimpleDateFormat(
+                    "yyyy-MM-dd HH:mm:ss");
+            String time = format.format(date);
+            kpiEntity.setSN_LASTMODIFIED(time);
+            kpiEntity.setSN_ID(id);
+            String titles = jsonobj.getString("title");
+            if (titles == null || "".equals(titles)) {
+                continue;
+            }
+            String centent = filterEmoji(titles, "*");
+            if (!isChinaWord(centent)) {
+                continue;
+            }
+            title = centent;
+            kpiEntity.setSN_TITLE(titles);
+            kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
+            kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
+            String summary = jsonobj.getString("summary");
+            if (summary != null && !"".equals(summary)) {
+                String summarys = filterEmoji(summary, "*");
+                if (!isChinaWord(summarys)) {
+                    continue;
+                }
+                summary = summarys;
+                kpiEntity.setSN_SUMMARY(summary);
+            }
+            String words = jsonobj.getString("keywords");
+            if (words != null && !"".equals(words)) {
+                String EmojiWord = filterEmoji(words, "*");
+                if (!isChinaWord(EmojiWord)) {
+                    continue;
+                }
+                if (EmojiWord != null && EmojiWord.length() > 254) {
+                    EmojiWord = EmojiWord.substring(0, 254);
+                }
+                kpiEntity.setSN_KEYWORDS(EmojiWord);
+            }
+            if (jsonobj.getString("dataType") != null
+                    && "wechat".equals(jsonobj.getString("dataType"))) {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
+                        + "-微信");
+            } else {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
+            }
+
+            kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
+            kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
+            kpiEntity.setSN_CHANNELID(jsonobj.getString("channelId"));
+            kpiEntity.setSN_VISITCOUNT(jsonobj
+                    .getIntValue("visitCount"));
+            kpiEntity.setSN_REBACKCOUNT(jsonobj
+                    .getIntValue("rebackCount"));
+            kpiEntity.setSN_LIKECOUNT(jsonobj.getIntValue("likeCount"));
+            kpiEntity.setSN_PRESSCOUNT(total);
+            kpiEntity.setSN_FORWARDCOUNT(jsonobj
+                    .getIntValue("forwardCount"));
+            kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
+            kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
+            // String originalPicUrl =
+            /*
+             * if(originalPicUrl!=null && "".equals(originalPicUrl)){
+             * String[] picurls = originalPicUrl.split(";");
+             * kpiEntity.setSN_ORIGINALPICURL(picurls[0]); }
+             */
+            // kpiEntity.setSN_ORIGINALPICURL(jsonobj.getString("originalPicUrl"));
+
+            kpiEntity.setSN_ORIGINAL(0);
+            kpiEntity.setSN_ISHOW(1);
+            kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
+            if ("72".equals(pageTypeID)) {
+                kpiEntity.setSN_SITETERM(sites + pageTypeID);
+            } else {
+                kpiEntity
+                        .setSN_SITETERM(mediaId + keyWord + pageTypeID);
+            }
+
+            String con = getNews(jsonobj.getString("id"));
+            kpiEntity.setSN_DOCUMENT(con);
+            /*int num = siteNewsDao.addSiteNews(kpiEntity);
+            if (num == 1) {
+                dataJson.put(id, jsonobj.getString("title"));
+                successNum++;
+            } else {
+                log.error("站点[" + titleJs.toString()
+                        + "]-关键词新闻，添加失败！title="
+                        + kpiEntity.getSN_TITLE());
+            }*/
+        }
         return successNum;
     }
 
@@ -1036,10 +1074,11 @@ public class SiteNewsServiceImpl implements SiteNewsService {
      * @param maidid
      * @param leaderSel
      * @param selTime
+     * @param oper
      */
     public void insertNewsByFts(JSONObject areaJson, String leaderKw,
                                 String pageTypeID, String currentTime, String removeWord,
-                                String maidid, String leaderSel, String selTime) {
+                                String maidid, String leaderSel, String selTime, OperationEntity oper) {
         JSONArray dates = null;
         if (selTime != null && !"".equals(selTime) && "7D".equals(selTime)) {
             dates = getdata(-7);
@@ -1054,14 +1093,14 @@ public class SiteNewsServiceImpl implements SiteNewsService {
         if (null != areaJson && null == leaderKw) { // 区县新闻
             int success_area = 0;
             success_area = searchFtsAndInsert(areaJson, null, pageTypeID,
-                    dates, sort, "", null, null);
+                    dates, sort, "", null, null, oper);
             if (success_area > 0) {
                 clearData(areaJson.getString("keyWord"), 0, currentTime,
                         success_area);
             }
         } else { // 领导人活动关键词
             int success_leaderKw = searchFtsAndInsert(null, leaderKw,
-                    pageTypeID, dates, sort, removeWord, maidid, leaderSel);
+                    pageTypeID, dates, sort, removeWord, maidid, leaderSel, oper);
             if (success_leaderKw > 0) {
                 if ("72".equals(pageTypeID) && "90".equals(maidid)) {
                     leaderKw = "yqrd" + maidid + pageTypeID;
@@ -1083,12 +1122,13 @@ public class SiteNewsServiceImpl implements SiteNewsService {
      * @param removeWord
      * @param maidid
      * @param leaderSel
+     * @param oper
      * @return
      */
     public int searchFtsAndInsert(JSONObject area, String leaderKw,
                                   String pageTypeID, JSONArray dates, JSONArray sort,
-                                  String removeWord, String maidid, String leaderSel) {
-        int successNum = 0;
+                                  String removeWord, String maidid, String leaderSel, OperationEntity oper) {
+
         String keyWord = "";
         String qxName = "";
         String outWord = "";
@@ -1160,6 +1200,8 @@ public class SiteNewsServiceImpl implements SiteNewsService {
             }
         }
         conditions.put("duplicate", "1");
+
+        // TODO bs_sitenews
         TokenEntity token = tokenGet.getToken();
         String url = BSEntity.getRooturl() + "/api/fts";
         Map<String, String> map = new HashMap<String, String>();
@@ -1168,17 +1210,26 @@ public class SiteNewsServiceImpl implements SiteNewsService {
         map.put("conditions", conditions.toString());
         map.put("sorts", sort.toString());
         String tokens = null;
-        if ("72".equals(pageTypeID) && "90".equals(maidid)) {
-            String responses = httpAPIService.postMap(url, map,
-                    token.getTK_TOKEN());
-            JSONObject reses = JSONObject.parseObject(responses);
-            int code = reses.getIntValue("status");
-            if (code == 0) {
-                tokens = reses.getString("data");
+
+        Integer successNum = 0;
+        EnumTask enumTask = EnumTask.KEYWORDNEWS;
+        try {
+            if ("72".equals(pageTypeID) && "90".equals(maidid)) {
+                String responses = httpAPIService.postMap(url, map,
+                        token.getTK_TOKEN());
+                JSONObject reses = JSONObject.parseObject(responses);
+                int code = reses.getIntValue("status");
+                if (code == 0) {
+                    tokens = reses.getString("data");
+                }
+            } else {
+                map.put("access_token", token.getTK_TOKEN());
+                tokens = httpAPIService.doPost(url, map);
             }
-        } else {
-            map.put("access_token", token.getTK_TOKEN());
-            tokens = httpAPIService.doPost(url, map);
+        } catch (Exception e) {
+            siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data error");
+            log.error("=============== method: {} fetch data from api, error: {} ============", enumTask, e.getMessage());
+            e.printStackTrace();
         }
 
         if (!StringUtils.isBlank(tokens)) {
@@ -1187,112 +1238,130 @@ public class SiteNewsServiceImpl implements SiteNewsService {
             if (documents != null && documents.size() > 0) {
                 log.info("站点[" + titleJs.toString() + "]-关键词新闻，数据返回结果:"
                         + documents.size());
-                for (Object obj : documents) {
-                    JSONObject jsonobj = JSONObject.parseObject(obj.toString());
-                    if (jsonobj.getString("channel").equals("未知")) {
-                        log.info("================ channel 未知 ============ url: " + url + ", condition: " + conditions.toString() +
-                                ", pageTypeId: " + pageTypeID);
-                    }
-                    String id = jsonobj.getString("id");
-                    SiteNewsEntity kpiEntity = new SiteNewsEntity();
-                    kpiEntity.setSYS_DELETEFLAG(0);
-                    Date date = new Date();
-                    DateFormat format = new SimpleDateFormat(
-                            "yyyy-MM-dd HH:mm:ss");
-                    String time = format.format(date);
-                    kpiEntity.setSN_LASTMODIFIED(time);
-
-                    kpiEntity.setSN_ID(id);
-                    String titles = jsonobj.getString("title");
-                    if (titles == null || "".equals(titles)) {
-                        continue;
-                    }
-                    String centent = filterEmoji(titles, "*");
-                    if (!isChinaWord(centent)) {
-                        continue;
-                    }
-                    title = centent;
-                    kpiEntity.setSN_TITLE(titles);
-                    kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
-                    kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
-                    String summary = jsonobj.getString("summary");
-                    if (summary != null && !"".equals(summary)) {
-                        String summarys = filterEmoji(summary, "*");
-                        if (!isChinaWord(summarys)) {
-                            continue;
-                        }
-                        summary = summarys;
-
-                        kpiEntity.setSN_SUMMARY(summary);
-                    }
-                    String words = jsonobj.getString("keywords");
-                    if (words != null && !"".equals(words)) {
-                        String EmojiWord = filterEmoji(words, "*");
-                        if (!isChinaWord(EmojiWord)) {
-                            continue;
-                        }
-                        if (EmojiWord != null && EmojiWord.length() > 254) {
-                            EmojiWord = EmojiWord.substring(0, 254);
-                        }
-                        kpiEntity.setSN_KEYWORDS(EmojiWord);
-                    }
-                    if (jsonobj.getString("dataType") != null
-                            && "wechat".equals(jsonobj.getString("dataType"))) {
-                        kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
-                                + "-微信");
-                    } else {
-                        kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
-                    }
-
-                    kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
-                    kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
-                    kpiEntity.setSN_CHANNELID(jsonobj.getString("channelId"));
-                    kpiEntity.setSN_VISITCOUNT(jsonobj
-                            .getIntValue("visitCount"));
-                    kpiEntity.setSN_REBACKCOUNT(jsonobj
-                            .getIntValue("rebackCount"));
-                    kpiEntity.setSN_LIKECOUNT(jsonobj.getIntValue("likeCount"));
-                    kpiEntity.setSN_FORWARDCOUNT(jsonobj
-                            .getIntValue("forwardCount"));
-                    kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
-                    kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
-                    // String originalPicUrl =
-                    /*
-                     * if(originalPicUrl!=null && "".equals(originalPicUrl)){
-                     * String[] picurls = originalPicUrl.split(";");
-                     * kpiEntity.setSN_ORIGINALPICURL(picurls[0]); }
-                     */
-                    // kpiEntity.setSN_ORIGINALPICURL(jsonobj.getString("originalPicUrl"));
-
-                    kpiEntity.setSN_ORIGINAL(0);
-                    kpiEntity.setSN_ISHOW(1);
-                    kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
-                    if ("72".equals(pageTypeID) && "90".equals(maidid)) {
-                        kpiEntity.setSN_SITETERM("yqrd" + maidid + pageTypeID);
-                    } else {
-                        kpiEntity.setSN_SITETERM(keyWord);
-                    }
-
-                    String con = getNews(jsonobj.getString("id"));
-                    kpiEntity.setSN_DOCUMENT(con);
-                    int num = siteNewsDao.addSiteNews(kpiEntity);
-                    if (num == 1) {
-                        dataJson.put(id, jsonobj.getString("title"));
-                        successNum++;
-                    } else {
-                        log.error("站点[" + titleJs.toString()
-                                + "]-关键词新闻，添加失败！title="
-                                + kpiEntity.getSN_TITLE());
-                    }
-                }/*
-                 * else{ String siteterm = isHave.get(0).getString("siteterm");
-                 * if(siteterm != null && !siteterm.contains(qxName)){ String
-                 * site = siteterm+ "," + qxName;
-                 * siteNewsDao.updateSiteNews(id,site); } }
-                 */
+                siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START, enumTask);
+                log.info("=============== method: {} mysql update ============", enumTask);
+                try {
+                    successNum = this.updateKeyWordNews(pageTypeID, maidid, keyWord, conditions, titleJs, url, documents);
+                } catch (Exception e) {
+                    siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+                    log.error("=============== method: {} mysql update, error: {} ============", enumTask, e.getMessage());
+                    e.printStackTrace();
+                }
+                siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE, enumTask, null);
+                log.info("=============== method: {} mysql update complete ============", enumTask);
             } else {
                 log.info("站点[" + titleJs.toString() + "]-关键词新闻，数据返回结果为空:"
                         + tokens + "，当前token=" + token.getTK_TOKEN());
+                siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data empty");
+                log.error("=============== method: {} fetch data from api, error: {} ============", enumTask);
+            }
+        } else {
+            siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+            log.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
+        }
+        return successNum;
+    }
+
+    private Integer updateKeyWordNews(String pageTypeID, String maidid, String keyWord, JSONObject conditions,
+                                  JSONArray titleJs, String url, JSONArray documents) throws Exception{
+        Integer successNum = 0;
+        String title;
+        for (Object obj : documents) {
+            JSONObject jsonobj = JSONObject.parseObject(obj.toString());
+            if (jsonobj.getString("channel").equals("未知")) {
+                log.info("================ channel 未知 ============ url: " + url + ", condition: " + conditions.toString() +
+                        ", pageTypeId: " + pageTypeID);
+            }
+            String id = jsonobj.getString("id");
+            SiteNewsEntity kpiEntity = new SiteNewsEntity();
+            kpiEntity.setSYS_DELETEFLAG(0);
+            Date date = new Date();
+            DateFormat format = new SimpleDateFormat(
+                    "yyyy-MM-dd HH:mm:ss");
+            String time = format.format(date);
+            kpiEntity.setSN_LASTMODIFIED(time);
+
+            kpiEntity.setSN_ID(id);
+            String titles = jsonobj.getString("title");
+            if (titles == null || "".equals(titles)) {
+                continue;
+            }
+            String centent = filterEmoji(titles, "*");
+            if (!isChinaWord(centent)) {
+                continue;
+            }
+            title = centent;
+            kpiEntity.setSN_TITLE(titles);
+            kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
+            kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
+            String summary = jsonobj.getString("summary");
+            if (summary != null && !"".equals(summary)) {
+                String summarys = filterEmoji(summary, "*");
+                if (!isChinaWord(summarys)) {
+                    continue;
+                }
+                summary = summarys;
+
+                kpiEntity.setSN_SUMMARY(summary);
+            }
+            String words = jsonobj.getString("keywords");
+            if (words != null && !"".equals(words)) {
+                String EmojiWord = filterEmoji(words, "*");
+                if (!isChinaWord(EmojiWord)) {
+                    continue;
+                }
+                if (EmojiWord != null && EmojiWord.length() > 254) {
+                    EmojiWord = EmojiWord.substring(0, 254);
+                }
+                kpiEntity.setSN_KEYWORDS(EmojiWord);
+            }
+            if (jsonobj.getString("dataType") != null
+                    && "wechat".equals(jsonobj.getString("dataType"))) {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
+                        + "-微信");
+            } else {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
+            }
+
+            kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
+            kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
+            kpiEntity.setSN_CHANNELID(jsonobj.getString("channelId"));
+            kpiEntity.setSN_VISITCOUNT(jsonobj
+                    .getIntValue("visitCount"));
+            kpiEntity.setSN_REBACKCOUNT(jsonobj
+                    .getIntValue("rebackCount"));
+            kpiEntity.setSN_LIKECOUNT(jsonobj.getIntValue("likeCount"));
+            kpiEntity.setSN_FORWARDCOUNT(jsonobj
+                    .getIntValue("forwardCount"));
+            kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
+            kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
+            // String originalPicUrl =
+            /*
+             * if(originalPicUrl!=null && "".equals(originalPicUrl)){
+             * String[] picurls = originalPicUrl.split(";");
+             * kpiEntity.setSN_ORIGINALPICURL(picurls[0]); }
+             */
+            // kpiEntity.setSN_ORIGINALPICURL(jsonobj.getString("originalPicUrl"));
+
+            kpiEntity.setSN_ORIGINAL(0);
+            kpiEntity.setSN_ISHOW(1);
+            kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
+            if ("72".equals(pageTypeID) && "90".equals(maidid)) {
+                kpiEntity.setSN_SITETERM("yqrd" + maidid + pageTypeID);
+            } else {
+                kpiEntity.setSN_SITETERM(keyWord);
+            }
+
+            String con = getNews(jsonobj.getString("id"));
+            kpiEntity.setSN_DOCUMENT(con);
+            int num = siteNewsDao.addSiteNews(kpiEntity);
+            if (num == 1) {
+                dataJson.put(id, jsonobj.getString("title"));
+                successNum++;
+            } else {
+                log.error("站点[" + titleJs.toString()
+                        + "]-关键词新闻，添加失败！title="
+                        + kpiEntity.getSN_TITLE());
             }
         }
         return successNum;
@@ -1300,8 +1369,9 @@ public class SiteNewsServiceImpl implements SiteNewsService {
 
     public List<String> insertOriNews(String SITE_ID, String types,
                                       int newstype, String pageTypeID, String currentTime,
-                                      List<String> rmDuplicate) {
+                                      List<String> rmDuplicate, OperationEntity oper) {
 
+        // TODO bs_sitenews
         TokenEntity token = tokenGet.getToken();
         String url = BSEntity.getRooturl();
         url = url + "/api/transmission/source/article/original";
@@ -1344,8 +1414,15 @@ public class SiteNewsServiceImpl implements SiteNewsService {
             }
             map.put("starttime", dateobj.get(0).toString());
             map.put("endtime", dateobj.get(1).toString());
-
-            String tokens = httpAPIService.doPost(url, map);
+            EnumTask enumTask = EnumTask.ORIGINALNEWS;
+            String tokens = null;
+            try {
+                tokens = httpAPIService.doPost(url, map);
+            } catch (Exception e) {
+                siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data error");
+                log.error("=============== method: {} fetch data from api, error: {} ============", enumTask, e.getMessage());
+                e.printStackTrace();
+            }
 
             if (!StringUtils.isBlank(tokens)) {
                 JSONObject json = JSONObject.parseObject(tokens);
@@ -1355,102 +1432,17 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                             + "数据返回结果:" + documents.size());
 
                     int successNum = 0;
-                    for (Object obj : documents) {
-                        JSONObject jsonobj = JSONObject.parseObject(obj
-                                .toString());
-
-                        SiteNewsEntity kpiEntity = new SiteNewsEntity();
-                        kpiEntity.setSYS_DELETEFLAG(0);
-                        Date date = new Date();
-                        DateFormat format = new SimpleDateFormat(
-                                "yyyy-MM-dd HH:mm:ss");
-                        String time = format.format(date);
-                        kpiEntity.setSN_LASTMODIFIED(time);
-                        kpiEntity.setSN_ID(jsonobj.getString("id"));
-                        String title = jsonobj.getString("title");
-                        if (title == null || "".equals(title)) {
-                            continue;
-                        }
-                        String centent = filterEmoji(title, "*");
-                        if (!isChinaWord(centent)) {
-                            continue;
-                        }
-                        title = centent;
-                        kpiEntity.setSN_TITLE(title);
-                        kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
-                        kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
-                        String summary = jsonobj.getString("summary");
-                        if (summary != null && !"".equals(summary)) {
-                            String summ = filterEmoji(summary, "*");
-                            if (!isChinaWord(summ)) {
-                                continue;
-                            }
-                            summary = summ;
-                            kpiEntity.setSN_SUMMARY(summary);
-                        }
-                        String words = jsonobj.getString("keywords");
-                        if (words != null && !"".equals(words)) {
-                            String keyword = filterEmoji(words, "*");
-                            if (!isChinaWord(keyword)) {
-                                continue;
-                            }
-                            if (keyword != null && keyword.length() > 254) {
-                                keyword = keyword.substring(0, 254);
-                            }
-                            kpiEntity.setSN_KEYWORDS(keyword);
-                        }
-                        if (jsonobj.getString("dataType") != null
-                                && "wechat".equals(jsonobj
-                                .getString("dataType"))) {
-                            kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
-                                    + "-微信");
-                        } else {
-                            kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
-                        }
-                        kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
-                        kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
-                        kpiEntity.setSN_CHANNELID(jsonobj
-                                .getString("channelId"));
-                        kpiEntity.setSN_VISITCOUNT(jsonobj
-                                .getIntValue("visitCount"));
-                        kpiEntity.setSN_REBACKCOUNT(jsonobj
-                                .getIntValue("rebackCount"));
-                        kpiEntity.setSN_LIKECOUNT(jsonobj
-                                .getIntValue("likeCount"));
-                        kpiEntity.setSN_FORWARDCOUNT(jsonobj
-                                .getIntValue("forwardCount"));
-                        kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
-                        kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
-                        kpiEntity.setSN_ORIGINALPICURL(jsonobj
-                                .getString("originalPicUrl"));
-                        kpiEntity.setSN_ORIGINAL(newstype);
-                        kpiEntity.setSN_ISHOW(1);
-                        kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
-                        kpiEntity.setSN_SITETERM(sid[z]);
-                        /*
-                         * String con = getNews(jsonobj.getString("id"));
-                         * if("WEIBO".equalsIgnoreCase(type[z])){ String centent
-                         * = filterEmoji(getNews(jsonobj .getString("id")),"*");
-                         * if(!isChinaWord(centent)){ continue; } con = centent;
-                         * } kpiEntity.setSN_DOCUMENT(con);
-                         */
-                        int num = siteNewsDao.addSiteNews(kpiEntity);
-                        if (num == 1) {
-                            dataJson.put(jsonobj.getString("id"),
-                                    jsonobj.getString("title"));
-                            successNum++;
-                        } else {
-                            log.error("站点[" + sid[z] + "]-原创新闻，类型=" + datatype
-                                    + "添加失败！title=" + kpiEntity.getSN_TITLE());
-                        }
-                        /*
-                         * else{ String siteterm =
-                         * isHave.get(0).getString("siteterm"); if(siteterm !=
-                         * null && !siteterm.contains(sid[z])){ String site =
-                         * siteterm+ "," + sid[z];
-                         * siteNewsDao.updateSiteNews(id,site); } }
-                         */
+                    siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START, enumTask);
+                    log.info("=============== method: {} mysql update ============", enumTask);
+                    try {
+                        successNum = this.updateOriginNews(newstype, pageTypeID, sid[z], datatype, documents, successNum);
+                    } catch (Exception e) {
+                        siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+                        log.error("=============== method: {} mysql update, error: {} ============", enumTask, e.getMessage());
+                        e.printStackTrace();
                     }
+                    siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE, enumTask, null);
+                    log.info("=============== method: {} mysql update complete ============", enumTask);
                     if (successNum > 0) {
                         clearData(sid[z], newstype, currentTime, successNum);
                     }
@@ -1459,19 +1451,125 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                     log.info("站点[" + sid[z] + "]-原创新闻，类型=" + datatype
                             + "数据返回结果为空:" + tokens + "，当前token="
                             + token.getTK_TOKEN());
+                    siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data empty");
+                    log.error("=============== method: {} fetch data from api, error: {} ============", enumTask);
                 }
+            } else {
+                siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+                log.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
             }
         }
         return rmDuplicate;
     }
 
+    private int updateOriginNews(int newstype, String pageTypeID, String sN_siteterm, String datatype, JSONArray documents, int successNum) {
+        for (Object obj : documents) {
+            JSONObject jsonobj = JSONObject.parseObject(obj
+                    .toString());
+
+            SiteNewsEntity kpiEntity = new SiteNewsEntity();
+            kpiEntity.setSYS_DELETEFLAG(0);
+            Date date = new Date();
+            DateFormat format = new SimpleDateFormat(
+                    "yyyy-MM-dd HH:mm:ss");
+            String time = format.format(date);
+            kpiEntity.setSN_LASTMODIFIED(time);
+            kpiEntity.setSN_ID(jsonobj.getString("id"));
+            String title = jsonobj.getString("title");
+            if (title == null || "".equals(title)) {
+                continue;
+            }
+            String centent = filterEmoji(title, "*");
+            if (!isChinaWord(centent)) {
+                continue;
+            }
+            title = centent;
+            kpiEntity.setSN_TITLE(title);
+            kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
+            kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
+            String summary = jsonobj.getString("summary");
+            if (summary != null && !"".equals(summary)) {
+                String summ = filterEmoji(summary, "*");
+                if (!isChinaWord(summ)) {
+                    continue;
+                }
+                summary = summ;
+                kpiEntity.setSN_SUMMARY(summary);
+            }
+            String words = jsonobj.getString("keywords");
+            if (words != null && !"".equals(words)) {
+                String keyword = filterEmoji(words, "*");
+                if (!isChinaWord(keyword)) {
+                    continue;
+                }
+                if (keyword != null && keyword.length() > 254) {
+                    keyword = keyword.substring(0, 254);
+                }
+                kpiEntity.setSN_KEYWORDS(keyword);
+            }
+            if (jsonobj.getString("dataType") != null
+                    && "wechat".equals(jsonobj
+                    .getString("dataType"))) {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
+                        + "-微信");
+            } else {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
+            }
+            kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
+            kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
+            kpiEntity.setSN_CHANNELID(jsonobj
+                    .getString("channelId"));
+            kpiEntity.setSN_VISITCOUNT(jsonobj
+                    .getIntValue("visitCount"));
+            kpiEntity.setSN_REBACKCOUNT(jsonobj
+                    .getIntValue("rebackCount"));
+            kpiEntity.setSN_LIKECOUNT(jsonobj
+                    .getIntValue("likeCount"));
+            kpiEntity.setSN_FORWARDCOUNT(jsonobj
+                    .getIntValue("forwardCount"));
+            kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
+            kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
+            kpiEntity.setSN_ORIGINALPICURL(jsonobj
+                    .getString("originalPicUrl"));
+            kpiEntity.setSN_ORIGINAL(newstype);
+            kpiEntity.setSN_ISHOW(1);
+            kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
+            kpiEntity.setSN_SITETERM(sN_siteterm);
+            /*
+             * String con = getNews(jsonobj.getString("id"));
+             * if("WEIBO".equalsIgnoreCase(type[z])){ String centent
+             * = filterEmoji(getNews(jsonobj .getString("id")),"*");
+             * if(!isChinaWord(centent)){ continue; } con = centent;
+             * } kpiEntity.setSN_DOCUMENT(con);
+             */
+            int num = siteNewsDao.addSiteNews(kpiEntity);
+            if (num == 1) {
+                dataJson.put(jsonobj.getString("id"),
+                        jsonobj.getString("title"));
+                successNum++;
+            } else {
+                log.error("站点[" + sN_siteterm + "]-原创新闻，类型=" + datatype
+                        + "添加失败！title=" + kpiEntity.getSN_TITLE());
+            }
+            /*
+             * else{ String siteterm =
+             * isHave.get(0).getString("siteterm"); if(siteterm !=
+             * null && !siteterm.contains(sid[z])){ String site =
+             * siteterm+ "," + sid[z];
+             * siteNewsDao.updateSiteNews(id,site); } }
+             */
+        }
+        return successNum;
+    }
+
     public int insertHotNews(String SITE_ID, String type, String pageTypeID,
-                             int orig) {
+                             int orig, OperationEntity oper) {
         int successNum = 0;
         TokenEntity token = tokenGet.getToken();
         String url = BSEntity.getRooturl();
         url = url + "/api/transmission/source/article/original";
 
+        // TODO bs_sitenews
         JSONArray dates = null;
         if (orig == 3) {
             dates = getdata(-1);
@@ -1495,7 +1593,15 @@ public class SiteNewsServiceImpl implements SiteNewsService {
             map.put("starttime", dates.get(0).toString());
             map.put("endtime", dates.get(1).toString());
 
-            String tokens = httpAPIService.doPost(url, map);
+            String tokens = null;
+            EnumTask enumTask = EnumTask.HOTNEWS;
+            try {
+                tokens = httpAPIService.doPost(url, map);
+            } catch (Exception e) {
+                siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data error");
+                log.error("=============== method: {} fetch data from api, error: {} ============", enumTask, e.getMessage());
+                e.printStackTrace();
+            }
 
             if (!StringUtils.isBlank(tokens)) {
                 JSONObject json = JSONObject.parseObject(tokens);
@@ -1503,122 +1609,143 @@ public class SiteNewsServiceImpl implements SiteNewsService {
                 if (documents != null && documents.size() > 0) {
                     log.info("站点[" + SITE_ID + "]-普通新闻，类型=" + type + "数据返回结果:"
                             + documents.size());
-                    for (Object obj : documents) {
-                        JSONObject jsonobj = JSONObject.parseObject(obj
-                                .toString());
-                        if (!jsonobj.containsKey("converPicUrl") || StringUtils.isBlank(jsonobj
-                                .getString("converPicUrl"))) {
-                            continue;
-                        }
-                        if (m > 1) {
-                            break;
-                        }
-                        String id = jsonobj.getString("id");
-                        SiteNewsEntity kpiEntity = new SiteNewsEntity();
-
-                        kpiEntity.setSYS_DELETEFLAG(0);
-                        Date date = new Date();
-                        DateFormat format = new SimpleDateFormat(
-                                "yyyy-MM-dd HH:mm:ss");
-                        String time = format.format(date);
-                        kpiEntity.setSN_LASTMODIFIED(time);
-                        kpiEntity.setSN_ID(jsonobj.getString("id"));
-
-                        String title = jsonobj.getString("title");
-                        if (title == null || "".equals(title)) {
-                            continue;
-                        }
-                        String centent = filterEmoji(title, "*");
-                        if (!isChinaWord(centent)) {
-                            continue;
-                        }
-                        title = centent;
-                        kpiEntity.setSN_TITLE(title);
-                        kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
-                        kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
-                        String summary = jsonobj.getString("summary");
-                        if (summary != null && !"".equals(summary)) {
-                            String summ = filterEmoji(summary, "*");
-                            if (!isChinaWord(summ)) {
-                                continue;
-                            }
-                            summary = summ;
-                            kpiEntity.setSN_SUMMARY(summary);
-                        }
-                        String words = jsonobj.getString("keywords");
-                        if (words != null && !"".equals(words)) {
-                            String keyword = filterEmoji(words, "*");
-                            if (!isChinaWord(keyword)) {
-                                continue;
-                            }
-                            if (keyword != null && keyword.length() > 254) {
-                                keyword = keyword.substring(0, 254);
-                            }
-                            kpiEntity.setSN_KEYWORDS(keyword);
-                        }
-                        if (jsonobj.getString("dataType") != null
-                                && "wechat".equals(jsonobj
-                                .getString("dataType"))) {
-                            kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
-                                    + "-微信");
-                        } else {
-                            kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
-                        }
-                        kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
-                        kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
-                        kpiEntity.setSN_CHANNELID(jsonobj
-                                .getString("channelId"));
-                        kpiEntity.setSN_VISITCOUNT(jsonobj
-                                .getIntValue("visitCount"));
-                        kpiEntity.setSN_REBACKCOUNT(jsonobj
-                                .getIntValue("rebackCount"));
-                        kpiEntity.setSN_LIKECOUNT(jsonobj
-                                .getIntValue("likeCount"));
-                        kpiEntity.setSN_FORWARDCOUNT(jsonobj
-                                .getIntValue("forwardCount"));
-                        kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
-                        kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
-
-                        kpiEntity.setSN_ORIGINALPICURL(jsonobj
-                                .getString("converPicUrl"));
-                        kpiEntity.setSN_ORIGINAL(orig);
-                        kpiEntity.setSN_ISHOW(1);
-                        kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
-                        kpiEntity.setSN_SITETERM(SITE_ID);
-                        String content = getNews(id);
-                        if (content != null && !"".equals(content)) {
-                            String cent = filterEmoji(content, "*");
-                            if (!isChinaWord(cent)) {
-                                continue;
-                            }
-                            content = cent;
-                            kpiEntity.setSN_DOCUMENT(content);
-                        }
-                        int num = siteNewsDao.addSiteNews(kpiEntity);
-                        if (1 == num) {
-                            m++;
-                            dataJson.put(jsonobj.getString("id"),
-                                    jsonobj.getString("title"));
-                            successNum++;
-                        } else {
-                            log.info("站点[" + SITE_ID + "]-普通新闻，类型=" + type
-                                    + "添加失败！title=" + kpiEntity.getSN_TITLE());
-                        }
+                    siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START, enumTask);
+                    //log.info("=============== method: {} mysql update ============", enumTask);
+                    try {
+                        successNum = this.updateHotNews(SITE_ID, type, pageTypeID, orig, successNum, m, documents);
+                    } catch (Exception e) {
+                        siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+                        log.error("=============== method: {} mysql update, error: {} ============", enumTask, e.getMessage());
+                        e.printStackTrace();
                     }
+                    siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE, enumTask, null);
+                    //log.info("=============== method: {} mysql update complete ============", enumTask);
                     return successNum;
                 } else {
                     log.info("站点[" + SITE_ID + "]-普通新闻，类型=" + type
                             + "数据返回结果为空:" + tokens + "，当前token="
                             + token.getTK_TOKEN());
+                    siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data empty");
+                    log.error("=============== method: {} fetch data from api, error: {} ============", enumTask);
                     break;
                 }
+            } else {
+                siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+                log.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
+            }
+        }
+        return successNum;
+    }
+
+    private int updateHotNews(String SITE_ID, String type, String pageTypeID, int orig, int successNum, int m, JSONArray documents) {
+        for (Object obj : documents) {
+            JSONObject jsonobj = JSONObject.parseObject(obj
+                    .toString());
+            if (!jsonobj.containsKey("converPicUrl") || StringUtils.isBlank(jsonobj
+                    .getString("converPicUrl"))) {
+                continue;
+            }
+            if (m > 1) {
+                break;
+            }
+            String id = jsonobj.getString("id");
+            SiteNewsEntity kpiEntity = new SiteNewsEntity();
+
+            kpiEntity.setSYS_DELETEFLAG(0);
+            Date date = new Date();
+            DateFormat format = new SimpleDateFormat(
+                    "yyyy-MM-dd HH:mm:ss");
+            String time = format.format(date);
+            kpiEntity.setSN_LASTMODIFIED(time);
+            kpiEntity.setSN_ID(jsonobj.getString("id"));
+
+            String title = jsonobj.getString("title");
+            if (title == null || "".equals(title)) {
+                continue;
+            }
+            String centent = filterEmoji(title, "*");
+            if (!isChinaWord(centent)) {
+                continue;
+            }
+            title = centent;
+            kpiEntity.setSN_TITLE(title);
+            kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
+            kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
+            String summary = jsonobj.getString("summary");
+            if (summary != null && !"".equals(summary)) {
+                String summ = filterEmoji(summary, "*");
+                if (!isChinaWord(summ)) {
+                    continue;
+                }
+                summary = summ;
+                kpiEntity.setSN_SUMMARY(summary);
+            }
+            String words = jsonobj.getString("keywords");
+            if (words != null && !"".equals(words)) {
+                String keyword = filterEmoji(words, "*");
+                if (!isChinaWord(keyword)) {
+                    continue;
+                }
+                if (keyword != null && keyword.length() > 254) {
+                    keyword = keyword.substring(0, 254);
+                }
+                kpiEntity.setSN_KEYWORDS(keyword);
+            }
+            if (jsonobj.getString("dataType") != null
+                    && "wechat".equals(jsonobj
+                    .getString("dataType"))) {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
+                        + "-微信");
+            } else {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
+            }
+            kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
+            kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
+            kpiEntity.setSN_CHANNELID(jsonobj
+                    .getString("channelId"));
+            kpiEntity.setSN_VISITCOUNT(jsonobj
+                    .getIntValue("visitCount"));
+            kpiEntity.setSN_REBACKCOUNT(jsonobj
+                    .getIntValue("rebackCount"));
+            kpiEntity.setSN_LIKECOUNT(jsonobj
+                    .getIntValue("likeCount"));
+            kpiEntity.setSN_FORWARDCOUNT(jsonobj
+                    .getIntValue("forwardCount"));
+            kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
+            kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
+
+            kpiEntity.setSN_ORIGINALPICURL(jsonobj
+                    .getString("converPicUrl"));
+            kpiEntity.setSN_ORIGINAL(orig);
+            kpiEntity.setSN_ISHOW(1);
+            kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
+            kpiEntity.setSN_SITETERM(SITE_ID);
+
+            String content = getNews(id);
+            if (content != null && !"".equals(content)) {
+                String cent = filterEmoji(content, "*");
+                if (!isChinaWord(cent)) {
+                    continue;
+                }
+                content = cent;
+                kpiEntity.setSN_DOCUMENT(content);
+            }
+            int num = siteNewsDao.addSiteNews(kpiEntity);
+            if (1 == num) {
+                m++;
+                dataJson.put(jsonobj.getString("id"),
+                        jsonobj.getString("title"));
+                successNum++;
+            } else {
+                log.info("站点[" + SITE_ID + "]-普通新闻，类型=" + type
+                        + "添加失败！title=" + kpiEntity.getSN_TITLE());
             }
         }
         return successNum;
     }
 
     public int insertNews(String SITE_ID, String type, String pageTypeID,
-                          int orig) {
+                          int orig, OperationEntity oper) {
         int successNum = 0;
         TokenEntity token = tokenGet.getToken();
         String url = BSEntity.getRooturl();
@@ -1630,6 +1757,8 @@ public class SiteNewsServiceImpl implements SiteNewsService {
         JSONArray site = new JSONArray();
         site.add(SITE_ID);
         JSONObject con = new JSONObject();
+
+        // TODO bs_sitenews
         if ("news".equalsIgnoreCase(type)) {
             url = url + "/api/fts/news";
             datatype.add("news");
@@ -1705,7 +1834,15 @@ public class SiteNewsServiceImpl implements SiteNewsService {
         map.put("conditions", con.toString());
         map.put("sorts", sort.toString());
         // map.put("pagesize", "18");
-        String tokens = httpAPIService.doPost(url, map);
+        String tokens = null;
+        EnumTask enumTask = EnumTask.SITENEWS;
+        try {
+            tokens = httpAPIService.doPost(url, map);
+        } catch (Exception e) {
+            siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data error");
+            log.error("=============== method: {} fetch data from api, error: {} ============", enumTask, e.getMessage());
+            e.printStackTrace();
+        }
 
         if (!StringUtils.isBlank(tokens)) {
             JSONObject json = JSONObject.parseObject(tokens);
@@ -1713,104 +1850,124 @@ public class SiteNewsServiceImpl implements SiteNewsService {
             if (documents != null && documents.size() > 0) {
                 log.info("站点[" + SITE_ID + "]-普通新闻，类型=" + type + "数据返回结果:"
                         + documents.size());
-                for (Object obj : documents) {
-                    JSONObject jsonobj = JSONObject.parseObject(obj.toString());
-                    if (jsonobj.getString("channel").equals("未知")) {
-                        log.info("============= channel 未知 =============== url: " + url + ", condition: " + con.toString());
-                    }
-
-                    String id = jsonobj.getString("id");
-                    SiteNewsEntity kpiEntity = new SiteNewsEntity();
-
-                    kpiEntity.setSYS_DELETEFLAG(0);
-                    Date date = new Date();
-                    DateFormat format = new SimpleDateFormat(
-                            "yyyy-MM-dd HH:mm:ss");
-                    String time = format.format(date);
-                    kpiEntity.setSN_LASTMODIFIED(time);
-                    kpiEntity.setSN_ID(jsonobj.getString("id"));
-
-                    String title = jsonobj.getString("title");
-                    if (title == null || "".equals(title)) {
-                        continue;
-                    }
-                    String centent = filterEmoji(title, "*");
-                    if (!isChinaWord(centent)) {
-                        continue;
-                    }
-                    title = centent;
-                    kpiEntity.setSN_TITLE(title);
-                    kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
-                    kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
-                    String summary = jsonobj.getString("summary");
-                    if (summary != null && !"".equals(summary)) {
-                        String summ = filterEmoji(summary, "*");
-                        if (!isChinaWord(summ)) {
-                            continue;
-                        }
-                        summary = summ;
-                        kpiEntity.setSN_SUMMARY(summary);
-                    }
-                    String words = jsonobj.getString("keywords");
-                    if (words != null && !"".equals(words)) {
-                        String keyword = filterEmoji(words, "*");
-                        if (!isChinaWord(keyword)) {
-                            continue;
-                        }
-                        if (keyword != null && keyword.length() > 254) {
-                            keyword = keyword.substring(0, 254);
-                        }
-                        kpiEntity.setSN_KEYWORDS(keyword);
-                    }
-                    if (jsonobj.getString("dataType") != null
-                            && "wechat".equals(jsonobj.getString("dataType"))) {
-                        kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
-                                + "-微信");
-                    } else {
-                        kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
-                    }
-                    kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
-                    kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
-                    kpiEntity.setSN_CHANNELID(jsonobj.getString("channelId"));
-                    kpiEntity.setSN_VISITCOUNT(jsonobj
-                            .getIntValue("visitCount"));
-                    kpiEntity.setSN_REBACKCOUNT(jsonobj
-                            .getIntValue("rebackCount"));
-                    kpiEntity.setSN_LIKECOUNT(jsonobj.getIntValue("likeCount"));
-                    kpiEntity.setSN_FORWARDCOUNT(jsonobj
-                            .getIntValue("forwardCount"));
-                    kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
-                    kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
-                    kpiEntity.setSN_ORIGINALPICURL(jsonobj
-                            .getString("originalPicUrl"));
-
-                    kpiEntity.setSN_ORIGINAL(orig);
-                    kpiEntity.setSN_ISHOW(1);
-                    kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
-                    kpiEntity.setSN_SITETERM(SITE_ID);
-                    String content = getNews(id);
-                    if (content != null && !"".equals(content)) {
-                        String cent = filterEmoji(content, "*");
-                        if (!isChinaWord(cent)) {
-                            continue;
-                        }
-                        content = cent;
-                        kpiEntity.setSN_DOCUMENT(content);
-                    }
-                    int num = siteNewsDao.addSiteNews(kpiEntity);
-                    if (1 == num) {
-                        dataJson.put(jsonobj.getString("id"),
-                                jsonobj.getString("title"));
-                        successNum++;
-                    } else {
-                        log.info("站点[" + SITE_ID + "]-普通新闻，类型=" + type
-                                + "添加失败！title=" + kpiEntity.getSN_TITLE());
-                    }
+                siteMonitorService.parseHandleASync(oper, SiteMonitorEntity.STATUS_START, enumTask);
+                log.info("=============== method: {} mysql update ============", enumTask);
+                try {
+                    successNum = this.updateSiteNews(SITE_ID, type, pageTypeID, orig, successNum, url, con, documents);
+                } catch (Exception e) {
+                    siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "update to mysql exception");
+                    log.error("=============== method: {} mysql update, error: {} ============", enumTask, e.getMessage());
+                    e.printStackTrace();
                 }
+                siteMonitorService.parseHandle(oper, SiteMonitorEntity.STATUS_COMPLETE, enumTask, null);
+                log.info("=============== method: {} mysql update complete ============", enumTask);
                 return successNum;
             } else {
                 log.info("站点[" + SITE_ID + "]-普通新闻，类型=" + type + "数据返回结果为空:"
                         + tokens + "，当前token=" + token.getTK_TOKEN());
+                siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data empty");
+                log.error("=============== method: {} fetch data from api, error: {} ============", enumTask);
+            }
+        } else {
+            siteMonitorService.processFail(oper, SiteMonitorEntity.STATUS_FAIL, enumTask, "fetch data failure");
+            log.error("=============== method: {} fetch data from api, failture: {} ============", enumTask);
+        }
+        return successNum;
+    }
+
+    private int updateSiteNews(String SITE_ID, String type, String pageTypeID, int orig, int successNum, String url, JSONObject con, JSONArray documents) {
+        for (Object obj : documents) {
+            JSONObject jsonobj = JSONObject.parseObject(obj.toString());
+            if (jsonobj.getString("channel").equals("未知")) {
+                log.info("============= channel 未知 =============== url: " + url + ", condition: " + con.toString());
+            }
+
+            String id = jsonobj.getString("id");
+            SiteNewsEntity kpiEntity = new SiteNewsEntity();
+
+            kpiEntity.setSYS_DELETEFLAG(0);
+            Date date = new Date();
+            DateFormat format = new SimpleDateFormat(
+                    "yyyy-MM-dd HH:mm:ss");
+            String time = format.format(date);
+            kpiEntity.setSN_LASTMODIFIED(time);
+            kpiEntity.setSN_ID(jsonobj.getString("id"));
+
+            String title = jsonobj.getString("title");
+            if (title == null || "".equals(title)) {
+                continue;
+            }
+            String centent = filterEmoji(title, "*");
+            if (!isChinaWord(centent)) {
+                continue;
+            }
+            title = centent;
+            kpiEntity.setSN_TITLE(title);
+            kpiEntity.setSN_PUBDATE(jsonobj.getString("pubdate"));
+            kpiEntity.setSN_LOCATION(jsonobj.getString("location"));
+            String summary = jsonobj.getString("summary");
+            if (summary != null && !"".equals(summary)) {
+                String summ = filterEmoji(summary, "*");
+                if (!isChinaWord(summ)) {
+                    continue;
+                }
+                summary = summ;
+                kpiEntity.setSN_SUMMARY(summary);
+            }
+            String words = jsonobj.getString("keywords");
+            if (words != null && !"".equals(words)) {
+                String keyword = filterEmoji(words, "*");
+                if (!isChinaWord(keyword)) {
+                    continue;
+                }
+                if (keyword != null && keyword.length() > 254) {
+                    keyword = keyword.substring(0, 254);
+                }
+                kpiEntity.setSN_KEYWORDS(keyword);
+            }
+            if (jsonobj.getString("dataType") != null
+                    && "wechat".equals(jsonobj.getString("dataType"))) {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("channel")
+                        + "-微信");
+            } else {
+                kpiEntity.setSN_SOURCE(jsonobj.getString("source"));
+            }
+            kpiEntity.setSN_SOURCEID(jsonobj.getString("sourceId"));
+            kpiEntity.setSN_CHANNEL(jsonobj.getString("channel"));
+            kpiEntity.setSN_CHANNELID(jsonobj.getString("channelId"));
+            kpiEntity.setSN_VISITCOUNT(jsonobj
+                    .getIntValue("visitCount"));
+            kpiEntity.setSN_REBACKCOUNT(jsonobj
+                    .getIntValue("rebackCount"));
+            kpiEntity.setSN_LIKECOUNT(jsonobj.getIntValue("likeCount"));
+            kpiEntity.setSN_FORWARDCOUNT(jsonobj
+                    .getIntValue("forwardCount"));
+            kpiEntity.setSN_DATATYPE(jsonobj.getString("dataType"));
+            kpiEntity.setSN_AUTHOR(jsonobj.getString("author"));
+            kpiEntity.setSN_ORIGINALPICURL(jsonobj
+                    .getString("originalPicUrl"));
+
+            kpiEntity.setSN_ORIGINAL(orig);
+            kpiEntity.setSN_ISHOW(1);
+            kpiEntity.setSN_PAGETYPEID(Integer.valueOf(pageTypeID));
+            kpiEntity.setSN_SITETERM(SITE_ID);
+            String content = getNews(id);
+            if (content != null && !"".equals(content)) {
+                String cent = filterEmoji(content, "*");
+                if (!isChinaWord(cent)) {
+                    continue;
+                }
+                content = cent;
+                kpiEntity.setSN_DOCUMENT(content);
+            }
+            int num = siteNewsDao.addSiteNews(kpiEntity);
+            if (1 == num) {
+                dataJson.put(jsonobj.getString("id"),
+                        jsonobj.getString("title"));
+                successNum++;
+            } else {
+                log.info("站点[" + SITE_ID + "]-普通新闻，类型=" + type
+                        + "添加失败！title=" + kpiEntity.getSN_TITLE());
             }
         }
         return successNum;

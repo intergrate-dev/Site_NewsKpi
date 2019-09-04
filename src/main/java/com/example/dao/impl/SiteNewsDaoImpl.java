@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.example.util.FastJsonConvertUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +95,8 @@ public class SiteNewsDaoImpl implements SiteNewsDao {
 
     @Override
     public int addSiteNews(SiteNewsEntity siteNews) {
+        log.info("==================================================================== siteNews: " + FastJsonConvertUtil.convertObjectToJSON(siteNews).toString()
+                + " =======================================================");
         try {
             return jdbcTemplate
                     .update("insert into bs_sitenews("

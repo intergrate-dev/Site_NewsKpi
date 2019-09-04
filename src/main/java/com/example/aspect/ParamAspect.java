@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -65,7 +67,7 @@ public class ParamAspect {
             logger.info("================ parame pageTypeIds remained: {} ==================", args[1]);
             if (pageTypeIds.size() == 0) {
                 logger.info("================ pageTypeIds is empty, then terminal ================");
-                return ResponseObject.newErrorResponseObject(-1, "对已更新过的大屏页面不要频繁操作，3小时后执行有效！");
+                // return ResponseObject.newErrorResponseObject(-1, "对已更新过的大屏页面不要频繁操作，3小时后执行有效！");
             }
         }
 
